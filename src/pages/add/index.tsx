@@ -125,7 +125,7 @@ const AddItemsPage: React.FC = () => {
         name: 'Imported Item from URL',
         category: 'tops',
         type: 'shirt',
-        imageUrl: '/demo/imported-item.jpg',
+        imageUrl: 'https://via.placeholder.com/400x400/F3F4F6/6B7280?text=Imported+Shirt',
         colors: ['white'],
         primaryColor: 'white',
         style: 'business',
