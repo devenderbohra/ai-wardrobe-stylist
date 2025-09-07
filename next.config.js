@@ -9,6 +9,14 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'storage.googleapis.com',
       },
       {
@@ -16,6 +24,7 @@ const nextConfig = {
         hostname: 'localhost',
       },
     ],
+    unoptimized: false,
   },
   env: {
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,

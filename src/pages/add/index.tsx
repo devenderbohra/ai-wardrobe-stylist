@@ -127,7 +127,7 @@ const AddItemsPage: React.FC = () => {
         name: 'Imported Item from URL',
         category: 'tops',
         type: 'shirt',
-        imageUrl: 'https://via.placeholder.com/400x400/F3F4F6/6B7280?text=Imported+Shirt',
+        imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltcG9ydGVkIFNoaXJ0PC90ZXh0Pgo8L3N2Zz4=',
         colors: ['white'],
         primaryColor: 'white',
         style: 'business',
@@ -361,6 +361,9 @@ const AddItemsPage: React.FC = () => {
                       src={item.imageUrl}
                       alt={item.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNsb3RoaW5nIEl0ZW08L3RleHQ+Cjwvc3ZnPg==';
+                      }}
                     />
                     <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1">
                       <Check className="w-3 h-3" />
