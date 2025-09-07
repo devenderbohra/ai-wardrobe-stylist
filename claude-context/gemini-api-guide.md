@@ -5,9 +5,11 @@ Gemini 2.5 Flash Image (aka "Nano Banana") is Google's state-of-the-art image ge
 
 ## API Access Details
 - **Base URL**: `https://generativelanguage.googleapis.com/v1beta`
-- **Model**: `gemini-2.5-flash-image-preview`
+- **Model**: `gemini-2.5-flash-image-preview` ⚠️ **REQUIRED for Nano Banana Hackathon**
 - **Rate Limits**: 20 images per minute, 200 requests per project per day (free tier)
 - **Authentication**: API key required
+
+> **Important**: The Nano Banana Hackathon specifically requires the `gemini-2.5-flash-image-preview` model for advanced image generation and fusion capabilities. Do not use the standard `gemini-2.5-flash` model as it lacks the image generation features needed for outfit visualization.
 
 ## Core Capabilities for Our Project
 
@@ -174,10 +176,13 @@ const generateOutfitVisualization = async (userPhoto, selectedItems, occasion) =
 
 ## Environment Variables
 ```bash
+# CRITICAL: Must use gemini-2.5-flash-image-preview for Nano Banana Hackathon
 GEMINI_API_KEY=your_api_key_here
 GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta
-MODEL_NAME=gemini-2.5-flash-image-preview
+GEMINI_MODEL=gemini-2.5-flash-image-preview
 ```
+
+> **⚠️ Competition Requirement**: The `GEMINI_MODEL` must be set to `gemini-2.5-flash-image-preview` for the Nano Banana Hackathon. This model provides the image fusion and generation capabilities required for the wardrobe styling functionality.
 
 ## Rate Limiting & Monitoring
 ```javascript
