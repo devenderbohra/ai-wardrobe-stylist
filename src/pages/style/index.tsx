@@ -13,58 +13,8 @@ import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { cn } from '@/src/utils';
 
-// Mock data for demonstration
-const MOCK_WARDROBE_ITEMS: ClothingItem[] = [
-  {
-    id: '1',
-    userId: 'demo-user',
-    name: 'Blue Denim Jeans',
-    category: 'bottoms',
-    type: 'jeans',
-    imageUrl: '/demo/jeans.jpg',
-    colors: ['blue'],
-    primaryColor: 'blue',
-    style: 'casual',
-    season: ['all-season'],
-    tags: ['comfortable'],
-    dateAdded: new Date(),
-    wearCount: 12,
-    isFavorite: true
-  },
-  {
-    id: '2',
-    userId: 'demo-user',
-    name: 'White Cotton T-Shirt',
-    category: 'tops',
-    type: 't-shirt',
-    imageUrl: '/demo/tshirt.jpg',
-    colors: ['white'],
-    primaryColor: 'white',
-    style: 'casual',
-    season: ['spring', 'summer'],
-    tags: ['basic'],
-    dateAdded: new Date(),
-    wearCount: 8,
-    isFavorite: false
-  },
-  {
-    id: '3',
-    userId: 'demo-user',
-    name: 'Black Blazer',
-    category: 'outerwear',
-    type: 'jacket',
-    imageUrl: '/demo/blazer.jpg',
-    colors: ['black'],
-    primaryColor: 'black',
-    style: 'business',
-    season: ['fall', 'winter'],
-    tags: ['professional'],
-    dateAdded: new Date(),
-    wearCount: 5,
-    isFavorite: true
-  }
-];
-
+// TODO: Load actual user wardrobe items from API
+const MOCK_WARDROBE_ITEMS: ClothingItem[] = [];
 interface StepProps {
   isActive: boolean;
   isCompleted: boolean;

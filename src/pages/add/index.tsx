@@ -69,9 +69,10 @@ const AddItemsPage: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Create mock clothing item
+      // TODO: Replace with actual API call to save clothing item
       const mockItem: ClothingItem = {
         id: generateId(),
-        userId: 'demo-user',
+        userId: 'current-user', // TODO: Get from auth
         name: `Uploaded ${progressItem.file.name.split('.')[0]}`,
         category: 'tops',
         type: 't-shirt',
@@ -119,9 +120,10 @@ const AddItemsPage: React.FC = () => {
       // Simulate URL import
       await new Promise(resolve => setTimeout(resolve, 2000));
 
+      // TODO: Replace with actual API call to import and save item
       const mockItem: ClothingItem = {
         id: generateId(),
-        userId: 'demo-user',
+        userId: 'current-user', // TODO: Get from auth
         name: 'Imported Item from URL',
         category: 'tops',
         type: 'shirt',

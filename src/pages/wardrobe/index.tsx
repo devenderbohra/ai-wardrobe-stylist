@@ -12,58 +12,7 @@ import Card from '@/src/components/ui/Card';
 import { cn } from '@/src/utils';
 
 // Mock data for demonstration
-const MOCK_WARDROBE_ITEMS: ClothingItem[] = [
-  {
-    id: '1',
-    userId: 'demo-user',
-    name: 'Blue Denim Jeans',
-    category: 'bottoms',
-    type: 'jeans',
-    imageUrl: 'https://via.placeholder.com/400x400/4F46E5/FFFFFF?text=Blue+Jeans',
-    thumbnailUrl: 'https://via.placeholder.com/200x200/4F46E5/FFFFFF?text=Jeans',
-    colors: ['blue'],
-    primaryColor: 'blue',
-    style: 'casual',
-    season: ['all-season'],
-    tags: ['comfortable', 'everyday'],
-    dateAdded: new Date('2024-01-15'),
-    wearCount: 12,
-    isFavorite: true,
-    brand: 'Levi\'s'
-  },
-  {
-    id: '2', 
-    userId: 'demo-user',
-    name: 'White Cotton T-Shirt',
-    category: 'tops',
-    type: 't-shirt',
-    imageUrl: 'https://via.placeholder.com/400x400/F3F4F6/6B7280?text=White+T-Shirt',
-    colors: ['white'],
-    primaryColor: 'white',
-    style: 'casual',
-    season: ['spring', 'summer'],
-    tags: ['basic', 'comfortable'],
-    dateAdded: new Date('2024-01-20'),
-    wearCount: 8,
-    isFavorite: false
-  },
-  {
-    id: '3',
-    userId: 'demo-user', 
-    name: 'Black Blazer',
-    category: 'outerwear',
-    type: 'jacket',
-    imageUrl: 'https://via.placeholder.com/400x400/1F2937/FFFFFF?text=Black+Blazer',
-    colors: ['black'],
-    primaryColor: 'black',
-    style: 'business',
-    season: ['fall', 'winter'],
-    tags: ['professional', 'formal'],
-    dateAdded: new Date('2024-01-10'),
-    wearCount: 5,
-    isFavorite: true
-  }
-];
+const MOCK_WARDROBE_ITEMS: ClothingItem[] = [];
 
 const CATEGORIES: Array<{ value: ClothingCategory | 'all'; label: string }> = [
   { value: 'all', label: 'All Items' },
@@ -76,8 +25,8 @@ const CATEGORIES: Array<{ value: ClothingCategory | 'all'; label: string }> = [
 ];
 
 const WardrobePage: React.FC = () => {
-  const [items, setItems] = useState<ClothingItem[]>(MOCK_WARDROBE_ITEMS);
-  const [filteredItems, setFilteredItems] = useState<ClothingItem[]>(MOCK_WARDROBE_ITEMS);
+  const [items, setItems] = useState<ClothingItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<ClothingItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ClothingCategory | 'all'>('all');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
