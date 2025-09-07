@@ -38,7 +38,7 @@ const WardrobePage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [loading, setLoading] = useState(true);
 
-  // Load user's clothing items
+  // Load user's clothing items and seed if needed
   useEffect(() => {
     const loadWardrobeItems = async () => {
       if (!session?.user?.id) return;
@@ -47,7 +47,39 @@ const WardrobePage: React.FC = () => {
         setLoading(true);
         const response = await clothingAPI.getAll(session.user.id);
         if (response.success) {
-          setItems(response.data!);
+          // If user has no items, seed with sample data
+          if (response.data!.length === 0) {
+            try {
+              const seedResponse = await fetch('/api/clothing/seed', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: session.user.id }),
+              });
+              
+              if (seedResponse.ok) {
+                const seedResult = await seedResponse.json();
+                if (seedResult.success && seedResult.itemsAdded > 0) {
+                  toast.success(`✨ We've added ${seedResult.itemsAdded} sample items to get you started! You can add more or try the AI styling.`);
+                  // Reload items to show the seeded data
+                  const newResponse = await clothingAPI.getAll(session.user.id);
+                  if (newResponse.success) {
+                    setItems(newResponse.data!);
+                  }
+                } else {
+                  setItems(response.data!);
+                }
+              } else {
+                setItems(response.data!);
+              }
+            } catch (seedError) {
+              console.warn('Failed to seed wardrobe:', seedError);
+              setItems(response.data!);
+            }
+          } else {
+            setItems(response.data!);
+          }
         } else {
           toast.error('Failed to load wardrobe items');
         }
