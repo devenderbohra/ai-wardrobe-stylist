@@ -71,6 +71,10 @@ const StylePage: React.FC = () => {
         const response = await clothingAPI.getAll(session.user.id);
         if (response.success) {
           setWardrobeItems(response.data!);
+          // Auto-advance to items step if user has clothing items
+          if (response.data!.length > 0 && currentStep === 'occasion') {
+            setCurrentStep('items');
+          }
         } else {
           toast.error('Failed to load wardrobe items');
         }
@@ -83,7 +87,7 @@ const StylePage: React.FC = () => {
     };
 
     loadWardrobeItems();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, currentStep]);
 
   if (!session) {
     return (

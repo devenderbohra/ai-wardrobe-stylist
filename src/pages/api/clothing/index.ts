@@ -28,7 +28,13 @@ export default async function handler(
 
       const transformedItems: ClothingItem[] = items.map(item => ({
         ...item,
+        type: item.type === null ? undefined : item.type as any,
         category: item.category as any,
+        thumbnailUrl: item.thumbnailUrl === null ? undefined : item.thumbnailUrl,
+        primaryColor: item.primaryColor as any,
+        style: item.style as any,
+        sourceUrl: item.sourceUrl === null ? undefined : item.sourceUrl,
+        brand: item.brand === null ? undefined : item.brand,
         colors: JSON.parse(item.colors),
         season: JSON.parse(item.season),
         tags: JSON.parse(item.tags),
@@ -82,7 +88,13 @@ export default async function handler(
 
       const transformedItem: ClothingItem = {
         ...newItem,
+        type: newItem.type === null ? undefined : newItem.type as any,
         category: newItem.category as any,
+        thumbnailUrl: newItem.thumbnailUrl === null ? undefined : newItem.thumbnailUrl,
+        primaryColor: newItem.primaryColor as any,
+        style: newItem.style as any,
+        sourceUrl: newItem.sourceUrl === null ? undefined : newItem.sourceUrl,
+        brand: newItem.brand === null ? undefined : newItem.brand,
         colors: JSON.parse(newItem.colors),
         season: JSON.parse(newItem.season),
         tags: JSON.parse(newItem.tags),

@@ -5,6 +5,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { prisma } from '@/src/lib/prisma';
 import { 
   generateId,
   extractDomain,
@@ -23,6 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { url, userId } = req.body;
+    console.log('URL import request (v2):', { url: url?.substring(0, 50), userId: userId?.substring(0, 10) });
 
     if (!url || !userId) {
       return res.status(400).json({ 
@@ -41,8 +43,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Check if it's a supported e-commerce site
-    if (!isSupportedEcommerceUrl(url)) {
-      const domain = extractDomain(url);
+    const domain = extractDomain(url);
+    const isSupported = isSupportedEcommerceUrl(url);
+    console.log('Domain validation:', { domain, isSupported });
+    
+    if (!isSupported) {
       return res.status(400).json({ 
         error: `${domain} is not currently supported. Please try uploading an image instead.` 
       });
@@ -87,10 +92,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sourceUrl: url,
       brand: productData.data.brand,
       dateAdded: new Date(),
-      lastWorn: undefined,
       wearCount: 0,
       isFavorite: false,
-      notes: productData.data.description?.substring(0, 200),
       aiAnalysis: {
         confidence: 0.7,
         description: `Imported from ${extractDomain(url)}`,
@@ -100,13 +103,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     };
 
-    // TODO: Save to database (for now, just return the item)
-    
-    res.status(200).json({
-      success: true,
-      item: clothingItem,
-      extractedData: productData.data,
-    });
+    // Save to database
+    try {
+      const savedItem = await prisma.clothingItem.create({
+        data: {
+          id: clothingItem.id,
+          userId: clothingItem.userId,
+          name: clothingItem.name,
+          category: clothingItem.category,
+          type: clothingItem.type || null,
+          imageUrl: clothingItem.imageUrl,
+          colors: JSON.stringify(clothingItem.colors),
+          primaryColor: clothingItem.primaryColor,
+          style: clothingItem.style,
+          season: JSON.stringify(clothingItem.season),
+          tags: JSON.stringify(clothingItem.tags),
+          sourceUrl: clothingItem.sourceUrl || null,
+          brand: clothingItem.brand || null,
+          dateAdded: clothingItem.dateAdded,
+          wearCount: clothingItem.wearCount,
+          isFavorite: clothingItem.isFavorite,
+          aiAnalysis: JSON.stringify(clothingItem.aiAnalysis),
+        },
+      });
+
+      res.status(200).json({
+        success: true,
+        item: savedItem,
+        extractedData: productData.data,
+      });
+    } catch (dbError) {
+      console.error('Database save error:', dbError);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to save item to database',
+      });
+    }
 
   } catch (error: any) {
     console.error('URL import error:', error);
