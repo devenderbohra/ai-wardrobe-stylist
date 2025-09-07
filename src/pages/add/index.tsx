@@ -362,14 +362,30 @@ const AddItemsPage: React.FC = () => {
               {addedItems.slice(-8).map((item, index) => (
                 <div key={item.id} className="space-y-2">
                   <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNsb3RoaW5nIEl0ZW08L3RleHQ+Cjwvc3ZnPg==';
-                      }}
-                    />
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 flex flex-col items-center justify-center text-purple-600"
+                      style={{ display: item.imageUrl ? 'none' : 'flex' }}
+                    >
+                      <Sparkles className="w-8 h-8 mb-2" />
+                      <span className="text-xs font-medium text-center px-2">
+                        {item.category === 'tops' ? '👕' : 
+                         item.category === 'bottoms' ? '👖' : 
+                         item.category === 'shoes' ? '👟' : 
+                         item.category === 'dresses' ? '👗' : '👔'}
+                      </span>
+                      <span className="text-xs text-center px-1">{item.type}</span>
+                    </div>
                     <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1">
                       <Check className="w-3 h-3" />
                     </div>
@@ -389,38 +405,83 @@ const AddItemsPage: React.FC = () => {
         </Card>
       )}
 
-      {/* Next Steps */}
+      {/* Enhanced Next Steps with Clear UX Flow */}
       {addedItems.length > 0 && (
-        <div className="text-center space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Ready to Get Styled? 
-          </h3>
-          <p className="text-gray-600">
-            You've added {addedItems.length} items to your wardrobe. Let's create some outfits!
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
-            <Link href="/style">
-              <Button size="lg">
-                <Sparkles className="w-5 h-5 mr-2" />
-                Get AI Styling
-              </Button>
-            </Link>
-            <Link href="/wardrobe">
-              <Button variant="outline" size="lg">
-                View My Wardrobe
-              </Button>
-            </Link>
+        <div className="text-center space-y-6">
+          <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 text-white">
+            <h3 className="text-xl font-bold mb-2">
+              🎉 Great! You've added {addedItems.length} item{addedItems.length > 1 ? 's' : ''}
+            </h3>
+            <p className="text-purple-100 mb-6">
+              Now let's put your wardrobe to work! Here's what you can do next:
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <div className="text-2xl mb-2">✨</div>
+                <h4 className="font-semibold mb-1">Get AI Styling</h4>
+                <p className="text-xs text-purple-100">Create outfits with AI recommendations</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <div className="text-2xl mb-2">👗</div>
+                <h4 className="font-semibold mb-1">View Wardrobe</h4>
+                <p className="text-xs text-purple-100">See all your clothing items</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-4 text-center">
+                <div className="text-2xl mb-2">➕</div>
+                <h4 className="font-semibold mb-1">Add More</h4>
+                <p className="text-xs text-purple-100">Build a bigger wardrobe</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+              <Link href="/style">
+                <Button size="lg" className="w-full sm:w-auto bg-white text-purple-600 hover:bg-purple-50">
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Start AI Styling
+                </Button>
+              </Link>
+              <Link href="/wardrobe">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
+                  View My Wardrobe
+                </Button>
+              </Link>
+            </div>
+          </div>
+          
+          <div className="text-sm text-gray-500">
+            💡 <strong>Pro tip:</strong> Add at least 3-5 items for better outfit recommendations!
           </div>
         </div>
       )}
 
-      {/* Empty state message */}
+      {/* Enhanced Empty State */}
       {addedItems.length === 0 && uploadProgress.length === 0 && (
-        <div className="text-center py-8">
-          <div className="text-gray-500">
-            Start by {activeMethod === 'upload' ? 'uploading photos' : 'importing URLs'} of your clothing items
+        <Card className="text-center py-12">
+          <div className="space-y-4">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
+              {activeMethod === 'upload' ? (
+                <Camera className="w-8 h-8 text-purple-600" />
+              ) : (
+                <LinkIcon className="w-8 h-8 text-purple-600" />
+              )}
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {activeMethod === 'upload' ? 'Upload Your First Item' : 'Import Your First Item'}
+              </h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                {activeMethod === 'upload' 
+                  ? 'Take photos of your clothes or upload from your device. Our AI will automatically categorize them for you!' 
+                  : 'Paste a product URL from your favorite store and we\'ll import the details and image automatically!'
+                }
+              </p>
+            </div>
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm">
+              💡 Start with 3-5 items for better recommendations
+            </div>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );
