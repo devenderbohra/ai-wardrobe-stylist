@@ -82,7 +82,7 @@ const ProfilePage: React.FC = () => {
 
       try {
         setIsLoading(true);
-        const response = await fetch('/api/user/profile');
+        const response = await fetch(`/api/user/profile?userId=${session.user.id}`);
         const result = await response.json();
 
         if (result.success && result.data) {
@@ -179,6 +179,7 @@ const ProfilePage: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          userId: session.user.id,
           photos: profile.photos,
           styleProfile: {
             styles: profile.preferences.styles,

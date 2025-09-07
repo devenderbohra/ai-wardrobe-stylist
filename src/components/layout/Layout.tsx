@@ -5,9 +5,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-// import { useSession, signOut } from 'next-auth/react'; // DEMO: Disabled for competition
-import { useDemoSession as useSession, signOut } from '@/src/lib/demo-session';
-import { Sparkles, Shirt, User, Settings, PlusCircle, LogOut } from 'lucide-react';
+import { Sparkles, Shirt, User, Settings, PlusCircle } from 'lucide-react';
 import { cn } from '@/src/utils';
 
 export interface LayoutProps {
@@ -16,23 +14,6 @@ export interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
-  const { data: session, status } = useSession();
-
-  // DEMO: Skip signin page check for competition
-
-  // Show loading state
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="w-6 h-6 text-purple-600 animate-pulse" />
-          <span className="text-gray-600">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // DEMO: Always show content for competition
 
   const navigation = [
     {
@@ -81,49 +62,24 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Desktop Navigation */}
             <div className="hidden sm:flex items-center space-x-8">
-              {session ? (
-                <>
-                  {navigation.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={cn(
-                          'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200',
-                          item.current
-                            ? 'text-purple-600 bg-purple-50'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                        )}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                  
-                  {/* User Menu */}
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      {session.user?.image && (
-                        <img
-                          src={session.user.image}
-                          alt={session.user.name || 'User'}
-                          className="w-6 h-6 rounded-full"
-                        />
-                      )}
-                      <span>{session.user?.name}</span>
-                    </div>
-                    <button
-                      onClick={() => signOut()}
-                      className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </>
-              ) : null /* DEMO: Hide sign-in button for competition */}
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200',
+                      item.current
+                        ? 'text-purple-600 bg-purple-50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Mobile menu button */}
