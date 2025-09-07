@@ -42,6 +42,11 @@ async function apiRequest<T>(
       };
     }
 
+    // Handle API responses that are already wrapped in { success, data }
+    if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+      return data;
+    }
+    
     return {
       success: true,
       data,
