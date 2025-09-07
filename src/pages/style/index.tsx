@@ -6,7 +6,10 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, Download, Share2, Heart, ArrowLeft, Shirt } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { ClothingItem, Occasion, OutfitRecommendation } from '@/src/types';
+import { clothingAPI } from '@/src/lib/api';
+import toast from 'react-hot-toast';
 import OccasionSelector from '@/src/components/ui/OccasionSelector';
 import ClothingGrid from '@/src/components/wardrobe/ClothingGrid';
 import Button from '@/src/components/ui/Button';
@@ -46,14 +49,48 @@ const Step: React.FC<StepProps> = ({ isActive, isCompleted, number, title }) => 
 type StyleStep = 'occasion' | 'items' | 'generate' | 'results';
 
 const StylePage: React.FC = () => {
+  const { data: session } = useSession();
   const [currentStep, setCurrentStep] = useState<StyleStep>('occasion');
   const [selectedOccasion, setSelectedOccasion] = useState<Occasion | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [wardrobeItems] = useState<ClothingItem[]>(MOCK_WARDROBE_ITEMS);
+  const [wardrobeItems, setWardrobeItems] = useState<ClothingItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [generatedOutfit, setGeneratedOutfit] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [recommendations, setRecommendations] = useState<OutfitRecommendation[]>([]);
   const [activeRecommendation, setActiveRecommendation] = useState<number>(0);
+
+  // Load user's wardrobe items
+  useEffect(() => {
+    const loadWardrobeItems = async () => {
+      if (!session?.user?.id) return;
+      
+      try {
+        setLoading(true);
+        const response = await clothingAPI.getAll(session.user.id);
+        if (response.success) {
+          setWardrobeItems(response.data!);
+        } else {
+          toast.error('Failed to load wardrobe items');
+        }
+      } catch (error) {
+        console.error('Failed to load wardrobe:', error);
+        toast.error('Failed to load wardrobe items');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWardrobeItems();
+  }, [session?.user?.id]);
+
+  if (!session) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600">Please sign in to access AI styling.</p>
+      </div>
+    );
+  }
 
   const steps = [
     { id: 'occasion' as StyleStep, number: 1, title: 'Choose Occasion' },
@@ -381,21 +418,59 @@ const StylePage: React.FC = () => {
       )}
 
       {/* Empty state for no wardrobe items */}
-      {wardrobeItems.length === 0 && (
+      {wardrobeItems.length === 0 && !loading && (
+        <Card className="text-center py-12">
+          <div className="space-y-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto">
+              <Shirt className="w-10 h-10 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Let's Build Your Digital Wardrobe!
+              </h3>
+              <p className="text-gray-600 max-w-lg mx-auto">
+                To get personalized AI styling recommendations, we need at least 3-5 clothing items from your wardrobe. 
+                This helps our AI understand your style and create better outfits.
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 max-w-md mx-auto">
+              <div className="flex items-start space-x-3">
+                <div className="text-2xl">💡</div>
+                <div className="text-left">
+                  <h4 className="font-semibold text-blue-900 mb-1">Quick Start Tips:</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Start with basic items (shirts, pants, shoes)</li>
+                    <li>• Add items for different occasions</li>
+                    <li>• Include both casual and formal pieces</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <Link href="/add">
+                <Button size="lg" className="w-full sm:w-auto">
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Start Adding Items
+                </Button>
+              </Link>
+              <p className="text-sm text-gray-500">
+                Takes just 2-3 minutes to get started
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+      
+      {/* Loading state */}
+      {loading && (
         <Card className="text-center py-12">
           <div className="space-y-4">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-              <Shirt className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto animate-pulse">
+              <Sparkles className="w-8 h-8 text-purple-600 animate-pulse" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              No Wardrobe Items Yet
-            </h3>
-            <p className="text-gray-600 max-w-md mx-auto">
-              Add some clothing items to your wardrobe first to start getting AI-powered style recommendations
-            </p>
-            <Link href="/add">
-              <Button>Add Clothing Items</Button>
-            </Link>
+            <p className="text-gray-600">Loading your wardrobe...</p>
           </div>
         </Card>
       )}
