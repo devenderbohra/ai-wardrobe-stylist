@@ -111,19 +111,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           userId: clothingItem.userId,
           name: clothingItem.name,
           category: clothingItem.category,
-          type: clothingItem.type || null,
+          type: clothingItem.type === undefined ? null : clothingItem.type,
           imageUrl: clothingItem.imageUrl,
           colors: JSON.stringify(clothingItem.colors),
           primaryColor: clothingItem.primaryColor,
           style: clothingItem.style,
           season: JSON.stringify(clothingItem.season),
           tags: JSON.stringify(clothingItem.tags),
-          sourceUrl: clothingItem.sourceUrl || null,
-          brand: clothingItem.brand || null,
+          sourceUrl: clothingItem.sourceUrl === undefined ? null : clothingItem.sourceUrl,
+          brand: clothingItem.brand === undefined ? null : clothingItem.brand,
           dateAdded: clothingItem.dateAdded,
+          lastWorn: clothingItem.lastWorn === undefined ? null : clothingItem.lastWorn,
           wearCount: clothingItem.wearCount,
           isFavorite: clothingItem.isFavorite,
-          aiAnalysis: JSON.stringify(clothingItem.aiAnalysis),
+          notes: clothingItem.notes === undefined ? null : clothingItem.notes,
+          aiAnalysis: clothingItem.aiAnalysis ? JSON.stringify(clothingItem.aiAnalysis) : null,
         },
       });
 
@@ -134,18 +136,71 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } catch (dbError) {
       console.error('Database save error:', dbError);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to save item to database',
-      });
+      
+      // Check for specific error types and provide user-friendly messages
+      if (dbError instanceof Error) {
+        if (dbError.message.includes('Invalid value provided')) {
+          res.status(400).json({
+            success: false,
+            error: 'Failed to save item: Invalid data format detected. Please try importing a different item or contact support.',
+            details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+          });
+        } else if (dbError.message.includes('Unique constraint')) {
+          res.status(409).json({
+            success: false,
+            error: 'This item already exists in your wardrobe.',
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            error: 'Failed to save item to your wardrobe. The import was successful but saving failed. Please try again.',
+            details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+          });
+        }
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'An unexpected database error occurred. Please try again.',
+        });
+      }
     }
 
   } catch (error: any) {
     console.error('URL import error:', error);
-    res.status(500).json({ 
-      error: 'Failed to import item from URL',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    
+    // Provide specific error messages based on error type
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      res.status(400).json({
+        success: false,
+        error: 'Unable to connect to the website. Please check the URL and try again.',
+      });
+    } else if (error.code === 'ETIMEDOUT') {
+      res.status(408).json({
+        success: false,
+        error: 'Request timed out. The website may be slow or unavailable. Please try again.',
+      });
+    } else if (error.response && error.response.status === 403) {
+      res.status(403).json({
+        success: false,
+        error: 'Access denied by the website. This site may not allow automated access.',
+      });
+    } else if (error.response && error.response.status === 404) {
+      res.status(404).json({
+        success: false,
+        error: 'Product not found. Please check the URL and try again.',
+      });
+    } else if (error.message && error.message.includes('not supported')) {
+      res.status(400).json({
+        success: false,
+        error: 'This website is not currently supported for URL imports. Please try uploading an image instead.',
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to import item from URL. Please check the URL and try again, or upload an image instead.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
   }
 }
 
