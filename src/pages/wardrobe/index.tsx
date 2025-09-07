@@ -5,7 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Grid, List, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+// import { useSession } from 'next-auth/react'; // DEMO: Disabled for competition
+import { useDemoSession as useSession } from '@/src/lib/demo-session';
 import { ClothingItem, WardrobeFilters, ClothingCategory } from '@/src/types';
 import { clothingAPI } from '@/src/lib/api';
 import ClothingGrid from '@/src/components/wardrobe/ClothingGrid';

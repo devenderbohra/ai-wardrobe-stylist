@@ -5,7 +5,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useSession, signOut } from 'next-auth/react';
+// import { useSession, signOut } from 'next-auth/react'; // DEMO: Disabled for competition
+import { useDemoSession as useSession, signOut } from '@/src/lib/demo-session';
 import { Sparkles, Shirt, User, Settings, PlusCircle, LogOut } from 'lucide-react';
 import { cn } from '@/src/utils';
 
@@ -17,10 +18,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  // Don't show navigation on sign-in page
-  if (router.pathname === '/auth/signin') {
-    return <div className="min-h-screen bg-gray-50">{children}</div>;
-  }
+  // DEMO: Skip signin page check for competition
 
   // Show loading state
   if (status === 'loading') {
@@ -34,11 +32,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     );
   }
 
-  // Redirect to sign-in if not authenticated (except for home page)
-  if (!session && router.pathname !== '/') {
-    router.push('/auth/signin');
-    return null;
-  }
+  // DEMO: Always show content for competition
 
   const navigation = [
     {
@@ -129,15 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </button>
                   </div>
                 </>
-              ) : (
-                <Link
-                  href="/auth/signin"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium bg-purple-600 text-white hover:bg-purple-700"
-                >
-                  <User className="w-4 h-4" />
-                  <span>Sign In</span>
-                </Link>
-              )}
+              ) : null /* DEMO: Hide sign-in button for competition */}
             </div>
 
             {/* Mobile menu button */}

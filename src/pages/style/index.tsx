@@ -6,7 +6,8 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, Download, Share2, Heart, ArrowLeft, Shirt } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+// import { useSession } from 'next-auth/react'; // DEMO: Disabled for competition  
+import { useDemoSession as useSession } from '@/src/lib/demo-session';
 import { ClothingItem, Occasion, OutfitRecommendation } from '@/src/types';
 import { clothingAPI } from '@/src/lib/api';
 import { generateOutfitImage } from '@/src/lib/gemini';

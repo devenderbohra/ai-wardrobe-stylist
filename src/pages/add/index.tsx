@@ -5,7 +5,8 @@
 import React, { useState } from 'react';
 import { Upload, Link as LinkIcon, Camera, Sparkles, Check, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+// import { useSession } from 'next-auth/react'; // DEMO: Disabled for competition
+import { useDemoSession as useSession } from '@/src/lib/demo-session';
 import { ClothingItem, UploadProgress } from '@/src/types';
 import { clothingAPI } from '@/src/lib/api';
 import ImageUpload from '@/src/components/ui/ImageUpload';
