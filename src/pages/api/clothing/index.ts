@@ -28,6 +28,7 @@ export default async function handler(
 
       const transformedItems: ClothingItem[] = items.map(item => ({
         ...item,
+        category: item.category as any,
         colors: JSON.parse(item.colors),
         season: JSON.parse(item.season),
         tags: JSON.parse(item.tags),
@@ -81,6 +82,7 @@ export default async function handler(
 
       const transformedItem: ClothingItem = {
         ...newItem,
+        category: newItem.category as any,
         colors: JSON.parse(newItem.colors),
         season: JSON.parse(newItem.season),
         tags: JSON.parse(newItem.tags),

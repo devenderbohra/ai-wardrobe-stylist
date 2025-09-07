@@ -101,11 +101,10 @@ export async function generateOutfitImage(request: GeminiImageRequest): Promise<
       }
     };
 
-    const response = await fetch(`${GEMINI_API_BASE_URL}/models/${MODEL_NAME}:generateContent`, {
+    const response = await fetch(`${GEMINI_API_BASE_URL}/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GEMINI_API_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(apiPayload)
     });
@@ -261,11 +260,10 @@ export async function analyzeClothingImage(imageBase64: string): Promise<{
       }
     };
 
-    const response = await fetch(`${GEMINI_API_BASE_URL}/models/gemini-2.5-flash:generateContent`, {
+    const response = await fetch(`${GEMINI_API_BASE_URL}/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GEMINI_API_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(apiPayload)
     });
@@ -360,11 +358,10 @@ export async function validateUserPhoto(imageBase64: string): Promise<{
       }
     };
 
-    const response = await fetch(`${GEMINI_API_BASE_URL}/models/gemini-2.5-flash:generateContent`, {
+    const response = await fetch(`${GEMINI_API_BASE_URL}/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GEMINI_API_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(apiPayload)
     });

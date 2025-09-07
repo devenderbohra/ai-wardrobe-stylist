@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { ClothingItem, Occasion, OutfitRecommendation } from '@/src/types';
 import { clothingAPI } from '@/src/lib/api';
+import { generateOutfitImage } from '@/src/lib/gemini';
 import toast from 'react-hot-toast';
 import OccasionSelector from '@/src/components/ui/OccasionSelector';
 import ClothingGrid from '@/src/components/wardrobe/ClothingGrid';
@@ -122,28 +123,46 @@ const StylePage: React.FC = () => {
     setCurrentStep('generate');
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Mock generated outfit result
-      setGeneratedOutfit('/demo/styled-outfit.jpg');
-      
-      // Mock recommendations
-      const mockRecommendations: OutfitRecommendation[] = [
-        {
-          items: wardrobeItems.filter(item => selectedItems.includes(item.id)),
-          confidence: 0.95,
-          reasoning: 'Perfect color coordination with excellent style match for the occasion',
-          styleScore: 0.9,
-          colorHarmony: 0.95,
+      const response = await fetch('/api/ai/generate-outfit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clothingItemIds: selectedItems,
           occasion: selectedOccasion
-        }
-      ];
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to generate outfit');
+      }
+
+      // Set the generated outfit image
+      setGeneratedOutfit(result.data.imageUrl);
       
-      setRecommendations(mockRecommendations);
+      // Create recommendation from API response
+      const recommendation: OutfitRecommendation = {
+        items: result.data.outfit.items,
+        confidence: result.data.outfit.confidence,
+        reasoning: result.data.outfit.reasoning,
+        styleScore: result.data.outfit.styleScore,
+        colorHarmony: result.data.outfit.colorHarmony,
+        occasion: result.data.outfit.occasion
+      };
+      
+      setRecommendations([recommendation]);
       setCurrentStep('results');
-    } catch (error) {
+      
+      toast.success('🎉 Your AI-styled outfit is ready!');
+    } catch (error: any) {
       console.error('Failed to generate outfit:', error);
+      toast.error(error.message || 'Failed to generate outfit. Please try again.');
+      
+      // Reset to items selection step on error
+      setCurrentStep('items');
     } finally {
       setIsGenerating(false);
     }

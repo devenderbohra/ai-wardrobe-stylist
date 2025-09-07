@@ -103,7 +103,7 @@ const AddItemsPage: React.FC = () => {
         };
 
         // Save to database
-        const response = await clothingAPI.create(itemData);
+        const response = await clothingAPI.create(itemData as any);
         if (!response.success) {
           throw new Error(response.error);
         }
@@ -369,7 +369,10 @@ const AddItemsPage: React.FC = () => {
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling.style.display = 'flex';
+                          const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (nextElement) {
+                            nextElement.style.display = 'flex';
+                          }
                         }}
                       />
                     ) : null}
