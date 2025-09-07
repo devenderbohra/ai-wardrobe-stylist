@@ -143,6 +143,7 @@ const AddItemsPage: React.FC = () => {
 
     setIsImporting(true);
 
+    try {
       // Import from URL using API
       const response = await clothingAPI.importFromUrl(urlInput, session.user.id!);
       
@@ -153,7 +154,6 @@ const AddItemsPage: React.FC = () => {
       } else {
         throw new Error(response.error);
       }
-
     } catch (error) {
       console.error('Import error:', error);
       toast.error('Failed to import item from URL');
