@@ -1,22 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions, prisma } from '@/src/lib/auth';
+import { prisma } from '@/src/lib/prisma';
 import { ApiResponse, ClothingItem } from '@/src/types';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ApiResponse<ClothingItem[] | ClothingItem>>
 ) {
-  const session = await getServerSession(req, res, authOptions);
-
-  if (!session?.user?.id) {
+  // DEMO: Use demo user from request body
+  const { userId } = req.body;
+  
+  if (!userId) {
     return res.status(401).json({
       success: false,
-      error: 'Authentication required'
+      error: 'User ID required'
     });
   }
-
-  const userId = session.user.id;
 
   try {
     if (req.method === 'GET') {

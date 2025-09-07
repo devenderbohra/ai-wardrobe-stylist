@@ -3,8 +3,6 @@
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/src/lib/auth';
 import { prisma } from '@/src/lib/prisma';
 import { generateOutfitImage } from '@/src/lib/gemini';
 import { resizeImageForAI } from '@/src/utils/imageUtils';
@@ -47,12 +45,13 @@ export default async function handler(
     });
   }
 
-  const session = await getServerSession(req, res, authOptions);
+  // DEMO: Use demo user instead of session authentication
+  const { clothingItemIds, occasion, customPrompt, userId }: GenerateOutfitRequest & { userId: string } = req.body;
   
-  if (!session?.user?.id) {
+  if (!userId) {
     return res.status(401).json({
       success: false,
-      error: 'Authentication required'
+      error: 'User ID required'
     });
   }
 
@@ -75,7 +74,7 @@ export default async function handler(
 
     // Get user profile with photos
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: { photos: true, name: true }
     });
 
@@ -100,7 +99,7 @@ export default async function handler(
     const clothingItems = await prisma.clothingItem.findMany({
       where: {
         id: { in: clothingItemIds },
-        userId: session.user.id
+        userId: userId
       },
       select: {
         id: true,
@@ -152,7 +151,7 @@ export default async function handler(
     // Save outfit to database
     const savedOutfit = await prisma.outfit.create({
       data: {
-        userId: session.user.id,
+        userId: userId,
         occasion,
         imageUrl: geminiResponse.imageUrl!,
         confidence,

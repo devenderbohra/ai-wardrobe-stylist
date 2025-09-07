@@ -3,8 +3,6 @@
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/src/lib/auth';
 import { prisma } from '@/src/lib/prisma';
 import { ApiResponse } from '@/src/types';
 
@@ -23,12 +21,13 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ApiResponse<UserProfile>>
 ) {
-  const session = await getServerSession(req, res, authOptions);
+  // DEMO: Use demo user from request body or query
+  const userId = req.method === 'GET' ? req.query.userId as string : req.body.userId;
   
-  if (!session?.user?.id) {
+  if (!userId) {
     return res.status(401).json({
       success: false,
-      error: 'Authentication required'
+      error: 'User ID required'
     });
   }
 
@@ -36,7 +35,7 @@ export default async function handler(
     try {
       const user = await prisma.user.findUnique({
         where: {
-          id: session.user.id
+          id: userId
         },
         select: {
           id: true,
@@ -89,7 +88,7 @@ export default async function handler(
 
       const user = await prisma.user.update({
         where: {
-          id: session.user.id
+          id: userId
         },
         data: updateData,
         select: {

@@ -146,7 +146,7 @@ const AddItemsPage: React.FC = () => {
 
     try {
       // Import from URL using API
-      const response = await clothingAPI.importFromUrl(urlInput, session.user.id!);
+      const response = await clothingAPI.importFromUrl(urlInput, session.user.id);
       
       if (response.success) {
         setAddedItems(prev => [...prev, response.data!]);

@@ -121,10 +121,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           sourceUrl: clothingItem.sourceUrl === undefined ? null : clothingItem.sourceUrl,
           brand: clothingItem.brand === undefined ? null : clothingItem.brand,
           dateAdded: clothingItem.dateAdded,
-          lastWorn: clothingItem.lastWorn === undefined ? null : clothingItem.lastWorn,
           wearCount: clothingItem.wearCount,
           isFavorite: clothingItem.isFavorite,
-          notes: clothingItem.notes === undefined ? null : clothingItem.notes,
           aiAnalysis: clothingItem.aiAnalysis ? JSON.stringify(clothingItem.aiAnalysis) : null,
         },
       });

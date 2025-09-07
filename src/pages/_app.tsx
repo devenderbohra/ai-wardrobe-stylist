@@ -6,11 +6,10 @@ import Layout from '@/src/components/layout/Layout'
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    // <SessionProvider session={session}> {/* DEMO: Disabled for competition */}
-      <Layout>
-        <Component {...pageProps} />
-        <Toaster position="top-center" />
-      </Layout>
-    // </SessionProvider> {/* DEMO: Disabled for competition */}
+    // DEMO: SessionProvider disabled for competition
+    <Layout>
+      <Component {...pageProps} />
+      <Toaster position="top-center" />
+    </Layout>
   )
 }
