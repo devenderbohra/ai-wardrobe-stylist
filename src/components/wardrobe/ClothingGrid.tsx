@@ -89,7 +89,7 @@ const ClothingGrid: React.FC<ClothingGridProps> = ({
 
   return (
     <div className={cn('grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4', className)}>
-      {items.map((item) => (
+      {(items || []).map((item) => (
         <Card
           key={item.id}
           hover={!!onItemClick}
