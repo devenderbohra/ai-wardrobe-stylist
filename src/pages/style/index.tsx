@@ -142,7 +142,18 @@ const StylePage: React.FC = () => {
       const result = await response.json();
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to generate outfit');
+        // Handle specific error types with user-friendly messages
+        if (result.error?.includes('Rate limit exceeded')) {
+          throw new Error('🚀 Our AI is getting lots of love! Please wait a minute and try again. You can use this time to adjust your clothing selection.');
+        } else if (result.error?.includes('User photos not found')) {
+          throw new Error('📸 Please complete your profile setup by adding a photo before generating outfits.');
+        } else if (result.error?.includes('Gemini API key')) {
+          throw new Error('⚙️ AI service is temporarily unavailable. Please try again later.');
+        } else if (response.status === 429) {
+          throw new Error('🚀 Our AI is getting lots of love! Please wait a moment and try again.');
+        } else {
+          throw new Error(result.error || 'Failed to generate outfit');
+        }
       }
 
       // Set the generated outfit image
