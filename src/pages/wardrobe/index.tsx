@@ -5,11 +5,14 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Grid, List, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { ClothingItem, WardrobeFilters, ClothingCategory } from '@/src/types';
+import { clothingAPI } from '@/src/lib/api';
 import ClothingGrid from '@/src/components/wardrobe/ClothingGrid';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { cn } from '@/src/utils';
+import toast from 'react-hot-toast';
 
 // Mock data for demonstration
 const MOCK_WARDROBE_ITEMS: ClothingItem[] = [];
@@ -25,13 +28,46 @@ const CATEGORIES: Array<{ value: ClothingCategory | 'all'; label: string }> = [
 ];
 
 const WardrobePage: React.FC = () => {
+  const { data: session } = useSession();
   const [items, setItems] = useState<ClothingItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<ClothingItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ClothingCategory | 'all'>('all');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load user's clothing items
+  useEffect(() => {
+    const loadWardrobeItems = async () => {
+      if (!session?.user?.id) return;
+      
+      try {
+        setLoading(true);
+        const response = await clothingAPI.getAll(session.user.id);
+        if (response.success) {
+          setItems(response.data!);
+        } else {
+          toast.error('Failed to load wardrobe items');
+        }
+      } catch (error) {
+        console.error('Failed to load wardrobe:', error);
+        toast.error('Failed to load wardrobe items');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWardrobeItems();
+  }, [session?.user?.id]);
+
+  if (!session) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600">Please sign in to view your wardrobe.</p>
+      </div>
+    );
+  }
 
   // Filter items based on current filters
   useEffect(() => {
@@ -59,17 +95,42 @@ const WardrobePage: React.FC = () => {
     setFilteredItems(filtered);
   }, [items, searchQuery, selectedCategory, showFavoritesOnly]);
 
-  const handleFavoriteToggle = (item: ClothingItem) => {
-    setItems(prevItems => 
-      prevItems.map(i => 
-        i.id === item.id ? { ...i, isFavorite: !i.isFavorite } : i
-      )
-    );
+  const handleFavoriteToggle = async (item: ClothingItem) => {
+    try {
+      const response = await clothingAPI.update(item.id, {
+        isFavorite: !item.isFavorite
+      });
+      
+      if (response.success) {
+        setItems(prevItems => 
+          prevItems.map(i => 
+            i.id === item.id ? { ...i, isFavorite: !i.isFavorite } : i
+          )
+        );
+      } else {
+        toast.error('Failed to update favorite status');
+      }
+    } catch (error) {
+      console.error('Failed to update favorite:', error);
+      toast.error('Failed to update favorite status');
+    }
   };
 
-  const handleDelete = (item: ClothingItem) => {
+  const handleDelete = async (item: ClothingItem) => {
     if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
-      setItems(prevItems => prevItems.filter(i => i.id !== item.id));
+      try {
+        const response = await clothingAPI.delete(item.id);
+        
+        if (response.success) {
+          setItems(prevItems => prevItems.filter(i => i.id !== item.id));
+          toast.success('Item deleted successfully');
+        } else {
+          toast.error('Failed to delete item');
+        }
+      } catch (error) {
+        console.error('Failed to delete item:', error);
+        toast.error('Failed to delete item');
+      }
     }
   };
 

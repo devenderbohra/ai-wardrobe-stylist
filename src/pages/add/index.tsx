@@ -5,7 +5,9 @@
 import React, { useState } from 'react';
 import { Upload, Link as LinkIcon, Camera, Sparkles, Check, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { ClothingItem, UploadProgress } from '@/src/types';
+import { clothingAPI } from '@/src/lib/api';
 import ImageUpload from '@/src/components/ui/ImageUpload';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
@@ -15,11 +17,20 @@ import toast from 'react-hot-toast';
 type AddMethod = 'upload' | 'url';
 
 const AddItemsPage: React.FC = () => {
+  const { data: session } = useSession();
   const [activeMethod, setActiveMethod] = useState<AddMethod>('upload');
   const [urlInput, setUrlInput] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
   const [addedItems, setAddedItems] = useState<ClothingItem[]>([]);
+
+  if (!session) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600">Please sign in to add clothing items to your wardrobe.</p>
+      </div>
+    );
+  }
 
   const handleFileUpload = async (files: File[]) => {
     const newProgress: UploadProgress[] = files.map(file => ({
@@ -69,42 +80,58 @@ const AddItemsPage: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Create mock clothing item
-      // TODO: Replace with actual API call to save clothing item
-      const mockItem: ClothingItem = {
-        id: generateId(),
-        userId: 'current-user', // TODO: Get from auth
-        name: `Uploaded ${progressItem.file.name.split('.')[0]}`,
-        category: 'tops',
-        type: 't-shirt',
-        imageUrl: URL.createObjectURL(progressItem.file),
-        colors: ['blue'],
-        primaryColor: 'blue',
-        style: 'casual',
-        season: ['all-season'],
-        tags: ['uploaded'],
-        dateAdded: new Date(),
-        wearCount: 0,
-        isFavorite: false,
-        aiAnalysis: {
-          confidence: 0.85,
-          description: 'Automatically categorized using AI',
-          suggestedCategory: 'tops',
-          suggestedColors: ['blue'],
-          analysisDate: new Date()
+      try {
+        // Create clothing item data
+        const itemData = {
+          name: `Uploaded ${progressItem.file.name.split('.')[0]}`,
+          category: 'tops',
+          type: 't-shirt',
+          imageUrl: URL.createObjectURL(progressItem.file),
+          colors: ['blue'],
+          primaryColor: 'blue',
+          style: 'casual',
+          season: ['all-season'],
+          tags: ['uploaded'],
+          isFavorite: false,
+          aiAnalysis: {
+            confidence: 0.85,
+            description: 'Automatically categorized using AI',
+            suggestedCategory: 'tops',
+            suggestedColors: ['blue'],
+            analysisDate: new Date()
+          }
+        };
+
+        // Save to database
+        const response = await clothingAPI.create(itemData);
+        if (!response.success) {
+          throw new Error(response.error);
         }
-      };
+
+        const savedItem = response.data!;
 
       // Complete
-      setUploadProgress(prev => 
-        prev.map(item => 
-          item.id === progressItem.id 
-            ? { ...item, status: 'complete', result: mockItem }
-            : item
-        )
-      );
+        setUploadProgress(prev => 
+          prev.map(item => 
+            item.id === progressItem.id 
+              ? { ...item, status: 'complete', result: savedItem }
+              : item
+          )
+        );
 
-      setAddedItems(prev => [...prev, mockItem]);
-      toast.success(`${progressItem.file.name} added to wardrobe!`);
+        setAddedItems(prev => [...prev, savedItem]);
+        toast.success(`${progressItem.file.name} added to wardrobe!`);
+      } catch (error) {
+        console.error('Failed to save item:', error);
+        setUploadProgress(prev => 
+          prev.map(item => 
+            item.id === progressItem.id 
+              ? { ...item, status: 'error', error: 'Failed to save item' }
+              : item
+          )
+        );
+        toast.error(`Failed to save ${progressItem.file.name}`);
+      }
     }
   };
 
@@ -116,41 +143,19 @@ const AddItemsPage: React.FC = () => {
 
     setIsImporting(true);
 
-    try {
-      // Simulate URL import
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // TODO: Replace with actual API call to import and save item
-      const mockItem: ClothingItem = {
-        id: generateId(),
-        userId: 'current-user', // TODO: Get from auth
-        name: 'Imported Item from URL',
-        category: 'tops',
-        type: 'shirt',
-        imageUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltcG9ydGVkIFNoaXJ0PC90ZXh0Pgo8L3N2Zz4=',
-        colors: ['white'],
-        primaryColor: 'white',
-        style: 'business',
-        season: ['all-season'],
-        tags: ['imported'],
-        sourceUrl: urlInput,
-        dateAdded: new Date(),
-        wearCount: 0,
-        isFavorite: false,
-        aiAnalysis: {
-          confidence: 0.9,
-          description: 'Imported and analyzed from e-commerce URL',
-          suggestedCategory: 'tops',
-          suggestedColors: ['white'],
-          analysisDate: new Date()
-        }
-      };
-
-      setAddedItems(prev => [...prev, mockItem]);
-      setUrlInput('');
-      toast.success('Item imported successfully!');
+      // Import from URL using API
+      const response = await clothingAPI.importFromUrl(urlInput, session.user.id!);
+      
+      if (response.success) {
+        setAddedItems(prev => [...prev, response.data!]);
+        setUrlInput('');
+        toast.success('Item imported successfully!');
+      } else {
+        throw new Error(response.error);
+      }
 
     } catch (error) {
+      console.error('Import error:', error);
       toast.error('Failed to import item from URL');
     } finally {
       setIsImporting(false);
