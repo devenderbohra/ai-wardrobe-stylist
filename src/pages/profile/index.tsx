@@ -2,9 +2,10 @@
  * Profile page - User onboarding and preferences
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Camera, Sparkles, ArrowRight, Check } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { StyleType, ColorFamily } from '@/src/types';
 import ImageUpload from '@/src/components/ui/ImageUpload';
 import Button from '@/src/components/ui/Button';
@@ -51,6 +52,7 @@ const COLOR_OPTIONS: Array<{ value: ColorFamily; label: string; bgClass: string 
 type ProfileStep = 'welcome' | 'basic' | 'photos' | 'preferences' | 'complete';
 
 const ProfilePage: React.FC = () => {
+  const { data: session } = useSession();
   const [currentStep, setCurrentStep] = useState<ProfileStep>('welcome');
   const [profile, setProfile] = useState<ProfileData>({
     name: '',
@@ -61,7 +63,8 @@ const ProfilePage: React.FC = () => {
       bodyType: ''
     }
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasExistingProfile, setHasExistingProfile] = useState(false);
 
   const steps = [
     { id: 'welcome' as ProfileStep, title: 'Welcome', number: 1 },
@@ -70,6 +73,60 @@ const ProfilePage: React.FC = () => {
     { id: 'preferences' as ProfileStep, title: 'Preferences', number: 4 },
     { id: 'complete' as ProfileStep, title: 'Complete', number: 5 }
   ];
+
+  // Load existing profile data
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!session?.user?.id) return;
+
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/user/profile');
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const userData = result.data;
+          
+          // Check if user has completed profile setup
+          const hasPhotos = userData.photos?.headshot || userData.photos?.fullBody;
+          const hasPreferences = userData.styleProfile?.styles?.length > 0;
+          
+          if (hasPhotos || hasPreferences || userData.name) {
+            setHasExistingProfile(true);
+            setCurrentStep('complete');
+            
+            // Load existing data
+            setProfile({
+              name: userData.name || session.user.name || '',
+              photos: userData.photos || {},
+              preferences: {
+                styles: userData.styleProfile?.styles || [],
+                favoriteColors: userData.styleProfile?.favoriteColors || [],
+                bodyType: userData.styleProfile?.bodyType || ''
+              }
+            });
+          } else {
+            // New user - start onboarding
+            setProfile(prev => ({
+              ...prev,
+              name: session.user.name || ''
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+        // Continue with onboarding if profile load fails
+        setProfile(prev => ({
+          ...prev,
+          name: session?.user?.name || ''
+        }));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [session]);
 
   const handleStyleToggle = (style: StyleType) => {
     setProfile(prev => ({
@@ -110,14 +167,38 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleSaveProfile = async () => {
+    if (!session?.user?.id) return;
+    
     setIsLoading(true);
     try {
-      // Simulate saving to backend
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Save profile data to database
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          photos: profile.photos,
+          styleProfile: {
+            styles: profile.preferences.styles,
+            favoriteColors: profile.preferences.favoriteColors,
+            bodyType: profile.preferences.bodyType
+          }
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save profile');
+      }
+
       setCurrentStep('complete');
+      setHasExistingProfile(true);
       toast.success('Profile saved successfully!');
-    } catch (error) {
-      toast.error('Failed to save profile');
+    } catch (error: any) {
+      console.error('Profile save error:', error);
+      toast.error(error.message || 'Failed to save profile');
     } finally {
       setIsLoading(false);
     }
@@ -126,6 +207,70 @@ const ProfilePage: React.FC = () => {
   const canProceedFromBasic = profile.name.trim().length > 0;
   const canProceedFromPhotos = profile.photos.headshot || profile.photos.fullBody;
   const canProceedFromPreferences = profile.preferences.styles.length > 0 && profile.preferences.favoriteColors.length > 0;
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-8">
+        <Card className="text-center py-12">
+          <div className="space-y-4">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto animate-pulse">
+              <User className="w-8 h-8 text-purple-600" />
+            </div>
+            <p className="text-gray-600">Loading your profile...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show profile summary for existing users
+  if (hasExistingProfile && currentStep === 'complete') {
+    return (
+      <div className="max-w-2xl mx-auto space-y-8">
+        <Card>
+          <div className="text-center space-y-6 py-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto">
+              <Check className="w-10 h-10 text-white" />
+            </div>
+            
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Complete!</h2>
+              <p className="text-gray-600">Your AI wardrobe stylist is ready to help you create amazing outfits.</p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="text-left">
+                <h3 className="font-medium text-gray-900">Your Preferences:</h3>
+                <div className="text-sm text-gray-600 mt-1">
+                  <p>• {profile.preferences.styles.length} style preferences</p>
+                  <p>• {profile.preferences.favoriteColors.length} favorite colors</p>
+                  {profile.preferences.bodyType && <p>• Body type: {profile.preferences.bodyType}</p>}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Link href="/style">
+                <Button size="lg" className="w-full">
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Start AI Styling
+                </Button>
+              </Link>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep('basic')}
+                className="w-full"
+              >
+                Edit Profile
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
