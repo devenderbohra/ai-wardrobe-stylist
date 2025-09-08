@@ -52,7 +52,7 @@ const COLOR_OPTIONS: Array<{ value: ColorFamily; label: string; bgClass: string 
 type ProfileStep = 'welcome' | 'basic' | 'photos' | 'preferences' | 'complete';
 
 const ProfilePage: React.FC = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState<ProfileStep>('welcome');
   const [profile, setProfile] = useState<ProfileData>({
     name: '',
@@ -77,13 +77,20 @@ const ProfilePage: React.FC = () => {
   // Load existing profile data
   useEffect(() => {
     const loadProfile = async () => {
-      if (!session?.user?.id) return;
+      if (!session?.user?.id) {
+        console.log('No session or user ID available');
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
+        console.log('Loading profile for user:', session.user.id);
         const response = await fetch(`/api/user/profile?userId=${session.user.id}`);
         
+        console.log('Profile API response status:', response.status);
         if (!response.ok) {
+          console.error('Profile API error:', response.status, response.statusText);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
@@ -179,10 +186,14 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      console.error('No session or user ID for save profile');
+      return;
+    }
     
     setIsLoading(true);
     try {
+      console.log('Saving profile for user:', session.user.id);
       // Save profile data to database
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
@@ -200,7 +211,9 @@ const ProfilePage: React.FC = () => {
         }),
       });
 
+      console.log('Save profile API response status:', response.status);
       if (!response.ok) {
+        console.error('Save profile API error:', response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -233,7 +246,7 @@ const ProfilePage: React.FC = () => {
   const canProceedFromPreferences = profile.preferences.styles.length > 0 && profile.preferences.favoriteColors.length > 0;
 
   // Show loading state
-  if (isLoading) {
+  if (status === 'loading' || isLoading) {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <Card className="text-center py-12">
@@ -242,6 +255,26 @@ const ProfilePage: React.FC = () => {
               <User className="w-8 h-8 text-purple-600" />
             </div>
             <p className="text-gray-600">Loading your profile...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show login required if not authenticated
+  if (status === 'unauthenticated') {
+    return (
+      <div className="max-w-2xl mx-auto space-y-8">
+        <Card className="text-center py-12">
+          <div className="space-y-4">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+              <User className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">Authentication Required</h2>
+            <p className="text-gray-600">Please sign in to access your profile.</p>
+            <Link href="/auth/signin">
+              <Button>Sign In</Button>
+            </Link>
           </div>
         </Card>
       </div>
