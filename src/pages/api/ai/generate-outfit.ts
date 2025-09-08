@@ -56,9 +56,17 @@ export default async function handler(
   }
 
   try {
+    console.log('=== AI GENERATION DEBUG START ===');
+    console.log('Request body:', req.body);
+    console.log('Method:', req.method);
+    console.log('Headers:', req.headers);
+    
     const { clothingItemIds, occasion, customPrompt }: GenerateOutfitRequest = req.body;
 
+    console.log('Extracted data:', { clothingItemIds, occasion, customPrompt });
+
     if (!clothingItemIds || clothingItemIds.length === 0) {
+      console.log('ERROR: No clothing items provided');
       return res.status(400).json({
         success: false,
         error: 'At least one clothing item is required'
@@ -66,19 +74,26 @@ export default async function handler(
     }
 
     if (!occasion) {
+      console.log('ERROR: No occasion provided');
       return res.status(400).json({
         success: false,
         error: 'Occasion is required'
       });
     }
 
+    console.log('Validation passed, proceeding with user lookup');
+
     // Get user profile with photos
+    console.log('Looking up user:', userId);
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { photos: true, name: true }
     });
 
+    console.log('User found:', !!user, 'Has photos:', !!user?.photos);
+
     if (!user?.photos) {
+      console.log('ERROR: User photos not found');
       return res.status(400).json({
         success: false,
         error: 'User photos not found. Please complete your profile setup first.'
@@ -88,7 +103,10 @@ export default async function handler(
     const userPhotos = JSON.parse(user.photos);
     const userPhotoUrl = userPhotos.fullBody || userPhotos.headshot;
 
+    console.log('User photo URL:', userPhotoUrl ? 'Found' : 'Not found');
+
     if (!userPhotoUrl) {
+      console.log('ERROR: User photo not available');
       return res.status(400).json({
         success: false,
         error: 'User photo not available. Please add a photo to your profile.'
@@ -118,16 +136,11 @@ export default async function handler(
       });
     }
 
-    // Convert images to base64 for AI processing
-    const userPhotoBase64 = await resizeImageForAI(userPhotoUrl);
-    const clothingImagesBase64 = await Promise.all(
-      clothingItems.map((item: any) => resizeImageForAI(item.imageUrl))
-    );
-
-    // Generate outfit using Gemini API
+    // For demo mode, we don't need to process actual images
+    // Just pass the request to the mock generation
     const geminiResponse = await generateOutfitImage({
-      userPhoto: userPhotoBase64,
-      clothingItems: clothingImagesBase64,
+      userPhoto: userPhotoUrl, // Pass as-is for demo
+      clothingItems: clothingItems.map(item => item.imageUrl), // Pass as-is for demo
       occasion,
       prompt: customPrompt || ''
     });

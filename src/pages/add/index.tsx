@@ -464,16 +464,11 @@ const AddItemsPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="flex justify-center">
               <Link href="/style">
-                <Button size="lg" className="w-full sm:w-auto bg-white text-purple-600 hover:bg-purple-50">
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Start AI Styling
-                </Button>
-              </Link>
-              <Link href="/wardrobe">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
-                  View My Wardrobe
+                <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50 px-8 py-3 text-lg">
+                  <Sparkles className="w-6 h-6 mr-3" />
+                  Start AI Styling Now
                 </Button>
               </Link>
             </div>

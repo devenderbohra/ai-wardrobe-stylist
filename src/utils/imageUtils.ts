@@ -46,56 +46,63 @@ export function fileToBase64(file: File): Promise<string> {
 }
 
 export async function resizeImageForAI(imageUrl: string, maxWidth: number = 1024, maxHeight: number = 1024): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
+  // Check if we're in a browser environment
+  if (typeof window !== 'undefined' && typeof Image !== 'undefined') {
+    // Browser environment - use canvas
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
       
-      // Calculate dimensions maintaining aspect ratio
-      let { width, height } = img;
-      if (width > height) {
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-      } else {
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height;
-          height = maxHeight;
-        }
-      }
-      
-      canvas.width = width;
-      canvas.height = height;
-      
-      ctx.drawImage(img, 0, 0, width, height);
-      
-      // Convert to base64 with compression
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error('Failed to create blob'));
-            return;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        // Calculate dimensions maintaining aspect ratio
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
           }
-          
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64 = reader.result as string;
-            const base64Data = base64.split(',')[1];
-            resolve(base64Data);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        },
-        'image/jpeg',
-        0.8 // Compression quality
-      );
-    };
-    
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = imageUrl;
-  });
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to base64 with compression
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'));
+              return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = () => {
+              const base64 = reader.result as string;
+              const base64Data = base64.split(',')[1];
+              resolve(base64Data);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          },
+          'image/jpeg',
+          0.8 // Compression quality
+        );
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = imageUrl;
+    });
+  } else {
+    // Server environment - just convert to base64 without resizing
+    return imageUrlToBase64(imageUrl);
+  }
 }

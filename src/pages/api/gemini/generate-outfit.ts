@@ -1,83 +1,62 @@
 /**
- * API route for generating outfit images using Gemini 2.5 Flash Image
+ * API endpoint for generating outfit images using Gemini 2.5 Flash Image
  */
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import { generateOutfitImage } from '@/src/lib/gemini';
-import { GeminiImageRequest } from '@/src/types';
+import { GeminiImageRequest, GeminiImageResponse } from '@/src/types';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<GeminiImageResponse>
+) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({
+      success: false,
+      error: 'Method not allowed',
+      generationTime: 0
+    });
   }
 
   try {
-    const { userPhoto, clothingItems, occasion, prompt }: GeminiImageRequest = req.body;
+    const request: GeminiImageRequest = req.body;
+
+    console.log('Gemini outfit generation request received:', {
+      hasUserPhoto: !!request.userPhoto,
+      clothingItemsCount: request.clothingItems?.length || 0,
+      occasion: request.occasion
+    });
 
     // Validate required fields
-    if (!userPhoto || !clothingItems || !occasion) {
-      return res.status(400).json({ 
-        error: 'userPhoto, clothingItems, and occasion are required' 
+    if (!request.userPhoto) {
+      return res.status(400).json({
+        success: false,
+        error: 'User photo is required for outfit generation',
+        generationTime: 0
       });
     }
 
-    if (!Array.isArray(clothingItems) || clothingItems.length === 0) {
-      return res.status(400).json({ 
-        error: 'At least one clothing item is required' 
+    if (!request.clothingItems || request.clothingItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'At least one clothing item is required',
+        generationTime: 0
       });
-    }
-
-    // Validate clothing items count (max 5 for performance)
-    if (clothingItems.length > 5) {
-      return res.status(400).json({ 
-        error: 'Maximum 5 clothing items allowed per outfit generation' 
-      });
-    }
-
-    // Validate base64 format
-    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-    if (!base64Regex.test(userPhoto)) {
-      return res.status(400).json({ 
-        error: 'Invalid user photo format. Must be base64 encoded.' 
-      });
-    }
-
-    for (let i = 0; i < clothingItems.length; i++) {
-      if (!base64Regex.test(clothingItems[i])) {
-        return res.status(400).json({ 
-          error: `Invalid clothing item ${i + 1} format. Must be base64 encoded.` 
-        });
-      }
     }
 
     // Generate the outfit image
-    const result = await generateOutfitImage({
-      userPhoto,
-      clothingItems,
-      occasion,
-      prompt
-    });
+    const result = await generateOutfitImage(request);
 
-    if (result.success) {
-      res.status(200).json({
-        success: true,
-        imageUrl: result.imageUrl,
-        generationTime: result.generationTime
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        error: result.error,
-        generationTime: result.generationTime
-      });
-    }
+    // Return the result
+    res.status(200).json(result);
 
   } catch (error: any) {
-    console.error('Outfit generation error:', error);
-    res.status(500).json({ 
+    console.error('Gemini outfit generation error:', error);
+    
+    res.status(500).json({
       success: false,
-      error: 'Failed to generate outfit image',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message || 'Internal server error during outfit generation',
+      generationTime: 0
     });
   }
 }

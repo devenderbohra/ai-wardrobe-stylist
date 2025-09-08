@@ -3,13 +3,14 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Grid, List, Plus } from 'lucide-react';
+import { Search, Filter, Grid, List, Plus, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 // import { useSession } from 'next-auth/react'; // DEMO: Disabled for competition
 import { useDemoSession as useSession } from '@/src/lib/demo-session';
 import { ClothingItem, WardrobeFilters, ClothingCategory } from '@/src/types';
 import { clothingAPI } from '@/src/lib/api';
 import ClothingGrid from '@/src/components/wardrobe/ClothingGrid';
+import EditItemModal from '@/src/components/wardrobe/EditItemModal';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { cn } from '@/src/utils';
@@ -37,11 +38,16 @@ const WardrobePage: React.FC = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [loading, setLoading] = useState(true);
+  const [editingItem, setEditingItem] = useState<ClothingItem | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Load user's clothing items and seed if needed
   useEffect(() => {
     const loadWardrobeItems = async () => {
-      if (!session?.user?.id) return;
+      if (!session?.user?.id) {
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
@@ -94,14 +100,6 @@ const WardrobePage: React.FC = () => {
     loadWardrobeItems();
   }, [session?.user?.id]);
 
-  if (!session) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-600">Please sign in to view your wardrobe.</p>
-      </div>
-    );
-  }
-
   // Filter items based on current filters
   useEffect(() => {
     let filtered = [...items];
@@ -128,6 +126,14 @@ const WardrobePage: React.FC = () => {
     setFilteredItems(filtered);
   }, [items, searchQuery, selectedCategory, showFavoritesOnly]);
 
+  if (!session) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600">Please sign in to view your wardrobe.</p>
+      </div>
+    );
+  }
+
   const handleFavoriteToggle = async (item: ClothingItem) => {
     try {
       const response = await clothingAPI.update(item.id, {
@@ -149,10 +155,38 @@ const WardrobePage: React.FC = () => {
     }
   };
 
+  const handleEdit = (item: ClothingItem) => {
+    setEditingItem(item);
+  };
+
+  const handleSaveEdit = async (itemId: string, updates: Partial<ClothingItem>) => {
+    setIsEditing(true);
+    try {
+      const response = await clothingAPI.update(itemId, updates);
+      
+      if (response.success) {
+        setItems(prevItems => 
+          prevItems.map(item => 
+            item.id === itemId ? { ...item, ...response.data } : item
+          )
+        );
+        toast.success('Item updated successfully');
+        setEditingItem(null);
+      } else {
+        toast.error('Failed to update item');
+      }
+    } catch (error) {
+      console.error('Failed to update item:', error);
+      toast.error('Failed to update item');
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
   const handleDelete = async (item: ClothingItem) => {
     if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
       try {
-        const response = await clothingAPI.delete(item.id);
+        const response = await clothingAPI.delete(item.id, session?.user?.id);
         
         if (response.success) {
           setItems(prevItems => prevItems.filter(i => i.id !== item.id));
@@ -170,9 +204,12 @@ const WardrobePage: React.FC = () => {
   const stats = {
     totalItems: items.length,
     favorites: items.filter(item => item.isFavorite).length,
-    mostWorn: items.reduce((max, item) => item.wearCount > max.wearCount ? item : max, items[0]),
+    mostWorn: items.length > 0 ? items.reduce((max, item) => item.wearCount > max.wearCount ? item : max, items[0]) : null,
     recentlyAdded: items.filter(item => {
-      const daysSinceAdded = (Date.now() - item.dateAdded.getTime()) / (1000 * 60 * 60 * 24);
+      if (!item.dateAdded) return false;
+      const dateAdded = new Date(item.dateAdded);
+      if (isNaN(dateAdded.getTime())) return false;
+      const daysSinceAdded = (Date.now() - dateAdded.getTime()) / (1000 * 60 * 60 * 24);
       return daysSinceAdded <= 7;
     }).length
   };
@@ -326,6 +363,7 @@ const WardrobePage: React.FC = () => {
       <ClothingGrid
         items={filteredItems}
         onFavorite={handleFavoriteToggle}
+        onEdit={handleEdit}
         onDelete={handleDelete}
         loading={loading}
         emptyMessage={
@@ -340,7 +378,8 @@ const WardrobePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
           <Link href="/style">
             <Button size="lg" className="w-full sm:w-auto">
-              Style Me Now
+              <Sparkles className="w-5 h-5 mr-2" />
+              Start AI Styling
             </Button>
           </Link>
           
@@ -350,6 +389,17 @@ const WardrobePage: React.FC = () => {
             </Button>
           </Link>
         </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingItem && (
+        <EditItemModal
+          item={editingItem}
+          isOpen={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={handleSaveEdit}
+          isLoading={isEditing}
+        />
       )}
     </div>
   );

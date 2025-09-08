@@ -45,9 +45,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Check if it's a supported e-commerce site
     const domain = extractDomain(url);
     const isSupported = isSupportedEcommerceUrl(url);
-    console.log('Domain validation:', { domain, isSupported });
+    console.log('Domain validation:', { domain, isSupported, url: url.substring(0, 100) });
     
     if (!isSupported) {
+      console.log('REJECTED: Unsupported domain:', domain);
       return res.status(400).json({ 
         error: `${domain} is not currently supported. Please try uploading an image instead.` 
       });

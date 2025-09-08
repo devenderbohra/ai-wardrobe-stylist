@@ -2,13 +2,49 @@
  * Home page - Welcome screen and onboarding
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Sparkles, Shirt, Camera, Zap, ArrowRight } from 'lucide-react';
+import { useDemoSession as useSession } from '@/src/lib/demo-session';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 
 const HomePage: React.FC = () => {
+  const { data: session } = useSession();
+
+  // Automatically seed user's wardrobe on first visit
+  useEffect(() => {
+    const seedUserWardrobe = async () => {
+      if (!session?.user?.id) return;
+
+      // Check if user already has been seeded (stored in localStorage)
+      const seededKey = `seeded-${session.user.id}`;
+      if (localStorage.getItem(seededKey)) return;
+
+      try {
+        const response = await fetch('/api/clothing/seed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: session.user.id }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.itemsAdded > 0) {
+            // Mark user as seeded
+            localStorage.setItem(seededKey, 'true');
+          }
+        }
+      } catch (error) {
+        console.warn('Auto-seed failed:', error);
+      }
+    };
+
+    seedUserWardrobe();
+  }, [session?.user?.id]);
+
   const features = [
     {
       icon: Camera,

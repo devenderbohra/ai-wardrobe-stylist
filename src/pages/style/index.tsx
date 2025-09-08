@@ -48,12 +48,11 @@ const Step: React.FC<StepProps> = ({ isActive, isCompleted, number, title }) => 
   </div>
 );
 
-type StyleStep = 'occasion' | 'items' | 'generate' | 'results';
+type StyleStep = 'items' | 'generate' | 'results';
 
 const StylePage: React.FC = () => {
   const { data: session } = useSession();
-  const [currentStep, setCurrentStep] = useState<StyleStep>('occasion');
-  const [selectedOccasion, setSelectedOccasion] = useState<Occasion | null>(null);
+  const [currentStep, setCurrentStep] = useState<StyleStep>('items');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [wardrobeItems, setWardrobeItems] = useState<ClothingItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,10 +71,6 @@ const StylePage: React.FC = () => {
         const response = await clothingAPI.getAll(session.user.id);
         if (response.success) {
           setWardrobeItems(response.data!);
-          // Auto-advance to items step if user has clothing items
-          if (response.data!.length > 0 && currentStep === 'occasion') {
-            setCurrentStep('items');
-          }
         } else {
           toast.error('Failed to load wardrobe items');
         }
@@ -99,30 +94,59 @@ const StylePage: React.FC = () => {
   }
 
   const steps = [
-    { id: 'occasion' as StyleStep, number: 1, title: 'Choose Occasion' },
-    { id: 'items' as StyleStep, number: 2, title: 'Select Items' },
-    { id: 'generate' as StyleStep, number: 3, title: 'Generate Style' },
-    { id: 'results' as StyleStep, number: 4, title: 'View Results' }
+    { id: 'items' as StyleStep, number: 1, title: 'Select Items' },
+    { id: 'generate' as StyleStep, number: 2, title: 'Generate Style' },
+    { id: 'results' as StyleStep, number: 3, title: 'View Results' }
   ];
-
-  const handleOccasionSelect = (occasion: Occasion) => {
-    setSelectedOccasion(occasion);
-    setCurrentStep('items');
-  };
 
   const handleItemToggle = (item: ClothingItem) => {
     setSelectedItems(prev => {
       const isSelected = prev.includes(item.id);
       if (isSelected) {
+        // Deselect item
         return prev.filter(id => id !== item.id);
       } else {
-        return [...prev, item.id];
+        // Smart category conflict resolution
+        const currentlySelectedItems = wardrobeItems.filter(wardrobeItem => 
+          prev.includes(wardrobeItem.id)
+        );
+        
+        // Define category conflicts (items that shouldn't be worn together)
+        const categoryConflicts = {
+          'tops': ['dresses'],
+          'dresses': ['tops', 'bottoms'],
+          'bottoms': ['dresses']
+        };
+        
+        const conflictingItems = currentlySelectedItems.filter(selectedItem => {
+          const itemConflicts = categoryConflicts[item.category as keyof typeof categoryConflicts] || [];
+          const selectedItemConflicts = categoryConflicts[selectedItem.category as keyof typeof categoryConflicts] || [];
+          
+          return itemConflicts.includes(selectedItem.category) || 
+                 selectedItemConflicts.includes(item.category) ||
+                 selectedItem.category === item.category;
+        });
+
+        if (conflictingItems.length > 0) {
+          // Replace conflicting items with the new one
+          const filteredItems = prev.filter(id => 
+            !conflictingItems.some(conflictItem => conflictItem.id === id)
+          );
+          
+          const replacedNames = conflictingItems.map(item => item.name).join(', ');
+          toast.success(`Replaced ${replacedNames} with ${item.name}`);
+          return [...filteredItems, item.id];
+        } else {
+          // No conflict, add the item
+          toast.success(`Added ${item.name} to outfit`);
+          return [...prev, item.id];
+        }
       }
     });
   };
 
   const handleGenerateOutfit = async () => {
-    if (!selectedOccasion || selectedItems.length === 0) return;
+    if (selectedItems.length === 0) return;
     
     setIsGenerating(true);
     setCurrentStep('generate');
@@ -135,7 +159,8 @@ const StylePage: React.FC = () => {
         },
         body: JSON.stringify({
           clothingItemIds: selectedItems,
-          occasion: selectedOccasion
+          occasion: 'casual', // Default occasion since we removed the selection
+          userId: session.user.id
         }),
       });
 
@@ -185,8 +210,7 @@ const StylePage: React.FC = () => {
   };
 
   const resetStyling = () => {
-    setCurrentStep('occasion');
-    setSelectedOccasion(null);
+    setCurrentStep('items');
     setSelectedItems([]);
     setGeneratedOutfit(null);
     setRecommendations([]);
@@ -207,7 +231,7 @@ const StylePage: React.FC = () => {
           </p>
         </div>
 
-        {currentStep !== 'occasion' && (
+        {currentStep !== 'items' && (
           <Button variant="outline" onClick={resetStyling}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Start Over
@@ -235,22 +259,13 @@ const StylePage: React.FC = () => {
       </Card>
 
       {/* Step Content */}
-      {currentStep === 'occasion' && (
-        <Card>
-          <OccasionSelector
-            selected={selectedOccasion}
-            onSelect={handleOccasionSelect}
-          />
-        </Card>
-      )}
-
-      {currentStep === 'items' && selectedOccasion && (
+      {currentStep === 'items' && (
         <div className="space-y-6">
           <Card>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Select Items for {selectedOccasion.charAt(0).toUpperCase() + selectedOccasion.slice(1)}
+                  Select Items for Your Outfit
                 </h3>
                 <p className="text-gray-600 mt-1">
                   Choose 2-5 items from your wardrobe to create an outfit
@@ -327,15 +342,25 @@ const StylePage: React.FC = () => {
               </h3>
               
               <div className="relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
-                <Image
-                  src={generatedOutfit}
-                  alt="AI Generated Outfit"
-                  fill
-                  className="object-cover"
-                  onError={() => {
-                    // Fallback to placeholder
-                  }}
-                />
+                {generatedOutfit ? (
+                  <Image
+                    src={generatedOutfit}
+                    alt="AI Generated Outfit"
+                    fill
+                    className="object-cover"
+                    onError={(e) => {
+                      console.error('Image failed to load:', generatedOutfit);
+                      // Show error state
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="text-center">
+                      <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Generating your styled photo...</p>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Action buttons overlay */}
                 <div className="absolute bottom-4 left-4 right-4 flex space-x-2">

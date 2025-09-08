@@ -213,8 +213,9 @@ export const clothingAPI = {
   /**
    * Delete clothing item
    */
-  delete: async (itemId: string): Promise<ApiResponse<{ success: boolean }>> => {
-    return apiRequest(`/clothing/${itemId}`, {
+  delete: async (itemId: string, userId?: string): Promise<ApiResponse<{ success: boolean }>> => {
+    const url = userId ? `/clothing/${itemId}?userId=${userId}` : `/clothing/${itemId}`;
+    return apiRequest(url, {
       method: 'DELETE',
     });
   },

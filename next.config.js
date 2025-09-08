@@ -20,6 +20,18 @@ const nextConfig = {
         hostname: 'storage.googleapis.com',
       },
       {
+        protocol: 'https',
+        hostname: 'm.media-amazon.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.amazon.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.amazonaws.com',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
       },
