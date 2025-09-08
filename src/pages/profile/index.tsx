@@ -5,8 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Camera, Sparkles, ArrowRight, Check } from 'lucide-react';
 import Link from 'next/link';
-// import { useSession } from 'next-auth/react'; // DEMO: Disabled for competition
-import { useDemoSession as useSession } from '@/src/lib/demo-session';
+import { useSession } from 'next-auth/react';
 import { StyleType, ColorFamily } from '@/src/types';
 import ImageUpload from '@/src/components/ui/ImageUpload';
 import Button from '@/src/components/ui/Button';
