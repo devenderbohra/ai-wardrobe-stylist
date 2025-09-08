@@ -91,7 +91,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     const updates: Partial<ClothingItem> = {
       name: formData.name.trim(),
       category: formData.category,
-      type: formData.type.trim() || undefined,
+      type: formData.type.trim() ? (formData.type.trim() as any) : undefined,
       colors: formData.colors,
       primaryColor: formData.primaryColor,
       style: formData.style,
