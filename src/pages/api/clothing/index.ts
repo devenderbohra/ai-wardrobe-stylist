@@ -6,8 +6,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ApiResponse<ClothingItem[] | ClothingItem>>
 ) {
-  // DEMO: Use demo user from request body
-  const { userId } = req.body;
+  // DEMO: Use demo user from query params for GET, body for POST
+  const userId = req.method === 'GET' ? req.query.userId as string : req.body.userId;
   
   if (!userId) {
     return res.status(401).json({

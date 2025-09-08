@@ -77,17 +77,43 @@ const AddItemsPage: React.FC = () => {
         )
       );
 
-      // Simulate AI analysis
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Create mock clothing item
+      // Actually upload the file
       try {
-        // Create clothing item data
+        // Convert file to base64
+        const base64Image = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(progressItem.file);
+        });
+
+        // Upload image
+        const uploadResponse = await fetch('/api/upload/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageData: base64Image,
+            fileName: progressItem.file.name
+          })
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error);
+        }
+
+        // Simulate AI analysis
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Create clothing item data with uploaded image
         const itemData = {
           name: `Uploaded ${progressItem.file.name.split('.')[0]}`,
           category: 'tops',
           type: 't-shirt',
-          imageUrl: URL.createObjectURL(progressItem.file),
+          imageUrl: uploadResult.url,
           colors: ['blue'],
           primaryColor: 'blue',
           style: 'casual',
@@ -104,7 +130,7 @@ const AddItemsPage: React.FC = () => {
         };
 
         // Save to database
-        const response = await clothingAPI.create(itemData as any);
+        const response = await clothingAPI.create({ ...itemData, userId: session.user.id } as any);
         if (!response.success) {
           throw new Error(response.error);
         }
