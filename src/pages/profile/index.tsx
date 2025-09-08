@@ -83,7 +83,19 @@ const ProfilePage: React.FC = () => {
       try {
         setIsLoading(true);
         const response = await fetch(`/api/user/profile?userId=${session.user.id}`);
-        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const text = await response.text();
+        let result;
+        try {
+          result = JSON.parse(text);
+        } catch (parseError) {
+          console.error('Failed to parse JSON response:', text);
+          throw new Error('Invalid JSON response from server');
+        }
 
         if (result.success && result.data) {
           const userData = result.data;
@@ -189,7 +201,18 @@ const ProfilePage: React.FC = () => {
         }),
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const text = await response.text();
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse JSON response:', text);
+        throw new Error('Invalid JSON response from server');
+      }
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to save profile');

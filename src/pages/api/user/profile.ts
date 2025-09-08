@@ -47,9 +47,24 @@ export default async function handler(
       });
 
       if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: 'User not found'
+        // Create user if doesn't exist (for demo session)
+        const newUser = await prisma.user.create({
+          data: {
+            id: userId,
+            name: null,
+            email: `${userId}@demo.styledandstudied.com`,
+            photos: null,
+            styleProfile: null
+          }
+        });
+        
+        return res.status(200).json({
+          success: true,
+          data: {
+            ...newUser,
+            photos: null,
+            styleProfile: null
+          }
         });
       }
 
@@ -86,11 +101,17 @@ export default async function handler(
         updateData.styleProfile = JSON.stringify(styleProfile);
       }
 
-      const user = await prisma.user.update({
+      const user = await prisma.user.upsert({
         where: {
           id: userId
         },
-        data: updateData,
+        create: {
+          id: userId,
+          email: `${userId}@demo.styledandstudied.com`,
+          name: null,
+          ...updateData
+        },
+        update: updateData,
         select: {
           id: true,
           name: true,
