@@ -6,7 +6,7 @@ import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, Check, AlertCircle } from 'lucide-react';
 import { cn, validateImageFile, formatFileSize } from '@/src/utils';
-import { Button } from './index';
+import { Button } from '.';
 
 export interface ImageUploadProps {
   onUpload: (files: File[]) => void;
