@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
-import { ClothingItem, ClothingCategory } from '@/src/types';
+import { ClothingItem, ClothingCategory, ColorFamily, Season } from '@/src/types';
 import { cn } from '@/src/utils';
 import { Button, Card } from '../ui';
 
@@ -33,12 +33,12 @@ const STYLES = [
   { value: 'trendy', label: 'Trendy' }
 ];
 
-const COLORS = [
+const COLORS: ColorFamily[] = [
   'red', 'blue', 'green', 'yellow', 'purple', 'pink', 'black', 'white', 
   'gray', 'brown', 'beige', 'navy', 'orange', 'multi'
 ];
 
-const SEASONS = [
+const SEASONS: Array<{ value: Season; label: string }> = [
   { value: 'spring', label: 'Spring' },
   { value: 'summer', label: 'Summer' },
   { value: 'fall', label: 'Fall' },
@@ -103,7 +103,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     await onSave(item.id, updates);
   };
 
-  const handleColorToggle = (color: string) => {
+  const handleColorToggle = (color: ColorFamily) => {
     const currentColors = formData.colors;
     const newColors = currentColors.includes(color)
       ? currentColors.filter(c => c !== color)
@@ -112,11 +112,11 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     setFormData(prev => ({
       ...prev,
       colors: newColors,
-      primaryColor: newColors.length > 0 ? newColors[0] : 'multi'
+      primaryColor: newColors.length > 0 ? (newColors[0] as ColorFamily) : 'multi'
     }));
   };
 
-  const handleSeasonToggle = (season: string) => {
+  const handleSeasonToggle = (season: Season) => {
     const currentSeasons = formData.season;
     const newSeasons = currentSeasons.includes(season)
       ? currentSeasons.filter(s => s !== season)

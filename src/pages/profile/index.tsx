@@ -295,25 +295,7 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  // Show login required if not authenticated
-  if (status === 'unauthenticated') {
-    return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <Card className="text-center py-12">
-          <div className="space-y-4">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-              <User className="w-8 h-8 text-red-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">Authentication Required</h2>
-            <p className="text-gray-600">Please sign in to access your profile.</p>
-            <Link href="/auth/signin">
-              <Button>Sign In</Button>
-            </Link>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  // Demo session is always authenticated, so no need to check for unauthenticated status
 
   // Show profile summary for existing users
   if (hasExistingProfile && currentStep === 'complete') {

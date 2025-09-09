@@ -150,7 +150,7 @@ SPECIFIC INSTRUCTIONS:
 The final image should look like a professional photo of the same person wearing their selected outfit.`;
 
     // Prepare API payload with user photo and clothing items
-    const parts = [
+    const parts: any[] = [
       { text: detailedPrompt }
     ];
 
