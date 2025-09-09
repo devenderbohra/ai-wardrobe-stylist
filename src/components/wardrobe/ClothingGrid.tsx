@@ -7,8 +7,7 @@ import Image from 'next/image';
 import { Heart, Edit2, Trash2, ExternalLink } from 'lucide-react';
 import { ClothingItem, ClothingCategory } from '@/src/types';
 import { cn } from '@/src/utils';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
+import { Card, Button } from '../ui';
 
 export interface ClothingGridProps {
   items: ClothingItem[];

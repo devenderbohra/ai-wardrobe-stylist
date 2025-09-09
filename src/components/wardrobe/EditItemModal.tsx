@@ -6,8 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { ClothingItem, ClothingCategory } from '@/src/types';
 import { cn } from '@/src/utils';
-import Button from '../ui/Button';
-import Card from '../ui/Card';
+import { Button, Card } from '../ui';
 
 interface EditItemModalProps {
   item: ClothingItem;
