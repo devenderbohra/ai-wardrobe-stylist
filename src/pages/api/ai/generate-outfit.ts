@@ -136,11 +136,48 @@ export default async function handler(
       });
     }
 
-    // For demo mode, we don't need to process actual images
-    // Just pass the request to the mock generation
+    // Convert images to base64 for Gemini API
+    let userPhotoBase64;
+    let clothingItemsBase64 = [];
+
+    try {
+      // Convert user photo to base64
+      if (userPhotoUrl.startsWith('data:image')) {
+        // Already base64
+        userPhotoBase64 = userPhotoUrl;
+      } else {
+        // Convert URL to base64
+        const { imageUrlToBase64 } = require('@/src/utils/imageUtils');
+        const base64Data = await imageUrlToBase64(userPhotoUrl);
+        userPhotoBase64 = `data:image/jpeg;base64,${base64Data}`;
+      }
+
+      // Convert clothing items to base64
+      for (const item of clothingItems) {
+        if (item.imageUrl.startsWith('data:image')) {
+          clothingItemsBase64.push(item.imageUrl);
+        } else {
+          const { imageUrlToBase64 } = require('@/src/utils/imageUtils');
+          const base64Data = await imageUrlToBase64(item.imageUrl);
+          clothingItemsBase64.push(`data:image/jpeg;base64,${base64Data}`);
+        }
+      }
+    } catch (imageError) {
+      console.error('Image processing error:', imageError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to process images for AI generation'
+      });
+    }
+
+    console.log('Images processed for Gemini API:', {
+      userPhoto: userPhotoBase64 ? 'Converted to base64' : 'Missing',
+      clothingItems: clothingItemsBase64.length
+    });
+
     const geminiResponse = await generateOutfitImage({
-      userPhoto: userPhotoUrl, // Pass as-is for demo
-      clothingItems: clothingItems.map(item => item.imageUrl), // Pass as-is for demo
+      userPhoto: userPhotoBase64,
+      clothingItems: clothingItemsBase64,
       occasion,
       prompt: customPrompt || ''
     });

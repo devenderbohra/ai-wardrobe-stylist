@@ -69,23 +69,11 @@ export async function generateOutfitImage(request: GeminiImageRequest): Promise<
       modelName: MODEL_NAME
     });
 
-    // If no Gemini API key, use demo mode
+    // Validate API key
     if (!GEMINI_API_KEY) {
-      console.log('Using demo mode - no API key available');
-      await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
-      
-      // Fallback demo images
-      const demoImages = {
-        work: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=600&fit=crop&auto=format",
-        casual: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=600&fit=crop&auto=format", 
-        date: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=600&fit=crop&auto=format",
-        formal: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&auto=format",
-        party: "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?w=400&h=600&fit=crop&auto=format"
-      };
-      
       return {
-        success: true,
-        imageUrl: demoImages[request.occasion] || demoImages.casual,
+        success: false,
+        error: 'Gemini API key not configured',
         generationTime: Date.now() - startTime
       };
     }
