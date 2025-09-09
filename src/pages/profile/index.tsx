@@ -9,8 +9,7 @@ import Link from 'next/link';
 import { useDemoSession as useSession } from '@/src/lib/demo-session';
 import { StyleType, ColorFamily } from '@/src/types';
 import ImageUpload from '@/src/components/ui/ImageUpload';
-import Button from '@/src/components/ui/Button';
-import Card from '@/src/components/ui/Card';
+import { Button, Card } from '@/src/components/ui';
 import { cn } from '@/src/utils';
 import toast from 'react-hot-toast';
 
@@ -172,17 +171,51 @@ const ProfilePage: React.FC = () => {
     }));
   };
 
-  const handlePhotoUpload = (files: File[], type: 'headshot' | 'fullBody') => {
+  const handlePhotoUpload = async (files: File[], type: 'headshot' | 'fullBody') => {
     if (files.length > 0) {
-      const imageUrl = URL.createObjectURL(files[0]);
-      setProfile(prev => ({
-        ...prev,
-        photos: {
-          ...prev.photos,
-          [type]: imageUrl
-        }
-      }));
-      toast.success(`${type === 'headshot' ? 'Headshot' : 'Full-body photo'} uploaded!`);
+      const file = files[0];
+      
+      try {
+        // Convert file to base64
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const base64Data = e.target?.result as string;
+          
+          // Upload to the API
+          const response = await fetch('/api/upload/image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageData: base64Data,
+              fileName: file.name
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            
+            // Update profile with the permanent URL (base64 data URL)
+            setProfile(prev => ({
+              ...prev,
+              photos: {
+                ...prev.photos,
+                [type]: result.url
+              }
+            }));
+            
+            toast.success(`${type === 'headshot' ? 'Headshot' : 'Full-body photo'} uploaded!`);
+          } else {
+            throw new Error('Upload failed');
+          }
+        };
+        
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Photo upload error:', error);
+        toast.error('Failed to upload photo. Please try again.');
+      }
     }
   };
 

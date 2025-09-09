@@ -4,9 +4,20 @@
 
 export async function imageUrlToBase64(url: string): Promise<string> {
   try {
-    const response = await fetch(url);
+    // Handle data URLs directly
+    if (url.startsWith('data:image')) {
+      return url.split(',')[1];
+    }
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; AI-Wardrobe-Bot/1.0)',
+      },
+    });
+    
     if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.statusText}`);
+      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
     }
     
     const arrayBuffer = await response.arrayBuffer();

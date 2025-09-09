@@ -143,8 +143,26 @@ export default async function handler(
     try {
       // Convert user photo to base64
       if (userPhotoUrl.startsWith('data:image')) {
-        // Already base64
+        // Already base64 - ensure it's complete
         userPhotoBase64 = userPhotoUrl;
+        console.log('User photo is already base64, length:', userPhotoBase64.length);
+        
+        // Validate the base64 data is complete
+        const base64Part = userPhotoBase64.split(',')[1];
+        if (!base64Part || base64Part.length < 100) {
+          console.log('ERROR: Base64 data appears truncated, length:', base64Part?.length);
+          return res.status(400).json({
+            success: false,
+            error: 'User photo data appears corrupted. Please re-upload your photo.'
+          });
+        }
+      } else if (userPhotoUrl.startsWith('blob:')) {
+        // Blob URLs can't be fetched server-side
+        console.log('ERROR: Blob URL detected for user photo, cannot process server-side');
+        return res.status(400).json({
+          success: false,
+          error: 'User photo needs to be uploaded as a permanent file. Please re-upload your photo.'
+        });
       } else {
         // Convert URL to base64
         const { imageUrlToBase64 } = require('@/src/utils/imageUtils');
@@ -156,6 +174,10 @@ export default async function handler(
       for (const item of clothingItems) {
         if (item.imageUrl.startsWith('data:image')) {
           clothingItemsBase64.push(item.imageUrl);
+        } else if (item.imageUrl.startsWith('blob:')) {
+          // Skip blob URLs as they can't be fetched server-side
+          console.log(`ERROR: Blob URL detected for clothing item ${item.name}, skipping`);
+          continue;
         } else {
           const { imageUrlToBase64 } = require('@/src/utils/imageUtils');
           const base64Data = await imageUrlToBase64(item.imageUrl);
@@ -171,7 +193,8 @@ export default async function handler(
     }
 
     console.log('Images processed for Gemini API:', {
-      userPhoto: userPhotoBase64 ? 'Converted to base64' : 'Missing',
+      userPhoto: userPhotoBase64 ? `Length: ${userPhotoBase64.length}` : 'Missing',
+      userPhotoPreview: userPhotoBase64 ? userPhotoBase64.substring(0, 100) + '...' : 'None',
       clothingItems: clothingItemsBase64.length
     });
 

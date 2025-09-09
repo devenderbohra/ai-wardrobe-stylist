@@ -52,6 +52,33 @@ function generatePrompt(occasion: Occasion, itemCount: number): string {
 }
 
 /**
+ * Retry function with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      if (attempt === maxRetries) throw error;
+      
+      // If it's a rate limit error, wait longer
+      if (error.status === 429) {
+        const delay = error.retryAfter || baseDelay * Math.pow(2, attempt);
+        console.log(`Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw error; // Don't retry non-rate-limit errors
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
+/**
  * Generate styled outfit image using Gemini AI
  * Creates a realistic image of the user wearing their selected clothing items
  */
@@ -88,16 +115,17 @@ export async function generateOutfitImage(request: GeminiImageRequest): Promise<
       };
     }
 
-    // Check rate limits
-    if (!checkRateLimit()) {
-      return {
-        success: false,
-        error: 'Rate limit exceeded. Please try again in a few minutes.',
-        generationTime: Date.now() - startTime
-      };
-    }
+    // Temporarily disable local rate limiting for testing
+    console.log('Local rate limiting disabled for testing');
+    // if (!checkRateLimit()) {
+    //   return {
+    //     success: false,
+    //     error: 'Rate limit exceeded. Please try again in a few minutes.',
+    //     generationTime: Date.now() - startTime
+    //   };
+    // }
 
-    requestCount++;
+    // requestCount++;
 
     // Create comprehensive styling prompt
     const itemCount = request.clothingItems?.length || 0;
@@ -129,6 +157,8 @@ The final image should look like a professional photo of the same person wearing
     // Add user photo
     if (request.userPhoto.startsWith('data:image')) {
       const base64Data = request.userPhoto.split(',')[1];
+      console.log('User photo base64 length:', base64Data.length);
+      console.log('User photo base64 preview:', base64Data.substring(0, 50) + '...');
       parts.push({
         inline_data: {
           mime_type: "image/jpeg",
@@ -166,44 +196,53 @@ The final image should look like a professional photo of the same person wearing
 
     console.log('Calling Gemini API for outfit generation...');
     
-    const response = await fetch(`${GEMINI_API_BASE_URL}/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': GEMINI_API_KEY || ''
-      },
-      body: JSON.stringify(apiPayload)
-    });
+    // Use retry mechanism for the API call
+    const { response, data } = await retryWithBackoff(async () => {
+      const response = await fetch(`${GEMINI_API_BASE_URL}/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_API_KEY || ''
+        },
+        body: JSON.stringify(apiPayload)
+      });
 
-    const data = await response.json();
-    console.log('Gemini API response status:', response.status);
+      const data = await response.json();
+      console.log('Gemini API response status:', response.status);
 
-    if (!response.ok) {
-      console.error('Gemini API error:', data);
-      
-      // Handle specific error cases
-      if (response.status === 429) {
-        return {
-          success: false,
-          error: 'Rate limit exceeded. Please try again in a few minutes.',
-          generationTime: Date.now() - startTime
-        };
+      if (!response.ok) {
+        console.error('Gemini API error:', data);
+        
+        // For rate limiting, throw with retry info
+        if (response.status === 429) {
+          const retryAfter = data.error?.details?.find((detail: any) => 
+            detail['@type'] === 'type.googleapis.com/google.rpc.RetryInfo'
+          )?.retryDelay;
+          
+          const retryMs = retryAfter ? 
+            parseInt(retryAfter.replace('s', '')) * 1000 : 
+            45000; // Default 45 seconds
+          
+          const error: any = new Error('Rate limit exceeded');
+          error.status = 429;
+          error.retryAfter = retryMs;
+          throw error;
+        }
+        
+        // For other errors, don't retry
+        if (response.status === 400 && data.error?.message?.includes('Safety')) {
+          const error: any = new Error('Image content was filtered for safety. Please try with different photos.');
+          error.status = 400;
+          throw error;
+        }
+        
+        const error: any = new Error(data.error?.message || 'Failed to generate styled outfit');
+        error.status = response.status;
+        throw error;
       }
-      
-      if (response.status === 400 && data.error?.message?.includes('Safety')) {
-        return {
-          success: false,
-          error: 'Image content was filtered for safety. Please try with different photos.',
-          generationTime: Date.now() - startTime
-        };
-      }
-      
-      return {
-        success: false,
-        error: data.error?.message || 'Failed to generate styled outfit',
-        generationTime: Date.now() - startTime
-      };
-    }
+
+      return { response, data };
+    }, 2, 45000); // Max 2 retries, 45 second base delay
 
     // Extract generated image from Gemini 2.5 Flash Image response
     console.log('Processing Gemini 2.5 Flash Image response...');
@@ -239,6 +278,23 @@ The final image should look like a professional photo of the same person wearing
   } catch (error: any) {
     const generationTime = Date.now() - startTime;
     console.error('Outfit generation error:', error);
+    
+    // Handle specific error types from our retry mechanism
+    if (error.status === 429) {
+      return {
+        success: false,
+        error: 'Rate limit exceeded. Our service is experiencing high demand. Please try again in a few minutes.',
+        generationTime
+      };
+    }
+    
+    if (error.status === 400) {
+      return {
+        success: false,
+        error: error.message || 'Image content was filtered for safety. Please try with different photos.',
+        generationTime
+      };
+    }
     
     return {
       success: false,

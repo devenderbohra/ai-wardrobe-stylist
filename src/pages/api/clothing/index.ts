@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/src/lib/prisma';
+import { createSeedItems } from '@/src/lib/seed-data';
 import { ApiResponse, ClothingItem } from '@/src/types';
 
 export default async function handler(
@@ -46,6 +47,15 @@ export default async function handler(
     }
 
     if (req.method === 'POST') {
+      const { action } = req.body;
+      
+      // Handle seed and reset actions
+      if (action === 'seed') {
+        return handleSeedWardrobe(req, res, userId);
+      } else if (action === 'reset') {
+        return handleResetWardrobe(req, res, userId);
+      }
+      
       // Create new clothing item
       const {
         name,
@@ -115,6 +125,137 @@ export default async function handler(
     return res.status(500).json({
       success: false,
       error: 'Internal server error'
+    });
+  }
+}
+
+async function handleSeedWardrobe(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  try {
+    // Check if user already has items
+    const existingItems = await prisma.clothingItem.findMany({
+      where: { userId },
+      take: 1
+    });
+
+    if (existingItems.length > 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'User already has wardrobe items',
+        data: []
+      });
+    }
+
+    // Ensure user exists
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      await prisma.user.create({
+        data: {
+          id: userId,
+          name: 'Demo User',
+          email: `${userId}@demo.styledandstudied.com`
+        }
+      });
+    }
+
+    // Create seed items
+    const seedItems = createSeedItems(userId);
+    const savedItems = await Promise.all(
+      seedItems.map(item => 
+        prisma.clothingItem.create({
+          data: {
+            id: item.id,
+            userId: item.userId,
+            name: item.name,
+            category: item.category,
+            type: item.type || null,
+            imageUrl: item.imageUrl,
+            colors: JSON.stringify(item.colors),
+            primaryColor: item.primaryColor,
+            style: item.style,
+            season: JSON.stringify(item.season),
+            tags: JSON.stringify(item.tags),
+            sourceUrl: item.sourceUrl || null,
+            brand: item.brand || null,
+            dateAdded: item.dateAdded,
+            wearCount: item.wearCount,
+            isFavorite: item.isFavorite,
+            aiAnalysis: item.aiAnalysis ? JSON.stringify(item.aiAnalysis) : null,
+          }
+        })
+      )
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Added ${savedItems.length} sample items`,
+      data: savedItems
+    });
+  } catch (error) {
+    console.error('Seed error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to seed wardrobe'
+    });
+  }
+}
+
+async function handleResetWardrobe(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  try {
+    // Delete existing items
+    const deletedItems = await prisma.clothingItem.deleteMany({
+      where: { userId }
+    });
+
+    // Ensure user exists
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      await prisma.user.create({
+        data: {
+          id: userId,
+          name: 'Demo User',
+          email: `${userId}@demo.styledandstudied.com`
+        }
+      });
+    }
+
+    // Create new seed items
+    const seedItems = createSeedItems(userId);
+    const savedItems = await Promise.all(
+      seedItems.map(item => 
+        prisma.clothingItem.create({
+          data: {
+            id: item.id,
+            userId: item.userId,
+            name: item.name,
+            category: item.category,
+            type: item.type || null,
+            imageUrl: item.imageUrl,
+            colors: JSON.stringify(item.colors),
+            primaryColor: item.primaryColor,
+            style: item.style,
+            season: JSON.stringify(item.season),
+            tags: JSON.stringify(item.tags),
+            sourceUrl: item.sourceUrl || null,
+            brand: item.brand || null,
+            dateAdded: item.dateAdded,
+            wearCount: item.wearCount,
+            isFavorite: item.isFavorite,
+            aiAnalysis: item.aiAnalysis ? JSON.stringify(item.aiAnalysis) : null,
+          }
+        })
+      )
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Reset wardrobe with ${savedItems.length} items`,
+      data: savedItems
+    });
+  } catch (error) {
+    console.error('Reset error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to reset wardrobe'
     });
   }
 }

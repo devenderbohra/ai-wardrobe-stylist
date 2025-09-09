@@ -11,8 +11,7 @@ import { ClothingItem, WardrobeFilters, ClothingCategory } from '@/src/types';
 import { clothingAPI } from '@/src/lib/api';
 import ClothingGrid from '@/src/components/wardrobe/ClothingGrid';
 import EditItemModal from '@/src/components/wardrobe/EditItemModal';
-import Button from '@/src/components/ui/Button';
-import Card from '@/src/components/ui/Card';
+import { Button, Card } from '@/src/components/ui';
 import { cn } from '@/src/utils';
 import toast from 'react-hot-toast';
 

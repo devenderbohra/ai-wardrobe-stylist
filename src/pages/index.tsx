@@ -6,8 +6,8 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Sparkles, Shirt, Camera, Zap, ArrowRight } from 'lucide-react';
 import { useDemoSession as useSession } from '@/src/lib/demo-session';
-import Button from '@/src/components/ui/Button';
-import Card from '@/src/components/ui/Card';
+import { Button } from '@/src/components/ui';
+import { Card } from '@/src/components/ui';
 
 const HomePage: React.FC = () => {
   const { data: session } = useSession();
