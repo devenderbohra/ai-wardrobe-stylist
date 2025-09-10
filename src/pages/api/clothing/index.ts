@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/src/lib/prisma';
+import { memoryDatabase, isMemoryDBMode } from '@/src/lib/memory-db';
 import { createSeedItems } from '@/src/lib/seed-data';
 import { ApiResponse, ClothingItem } from '@/src/types';
 
@@ -19,7 +20,16 @@ export default async function handler(
 
   try {
     if (req.method === 'GET') {
-      // Get all clothing items for the user
+      if (isMemoryDBMode()) {
+        // Use memory database for production
+        const items = await memoryDatabase.getClothingItems(userId);
+        return res.status(200).json({
+          success: true,
+          data: items
+        });
+      }
+
+      // Use Prisma for local development
       const items = await prisma.clothingItem.findMany({
         where: { userId },
         orderBy: { dateAdded: 'desc' }
@@ -74,6 +84,38 @@ export default async function handler(
         aiAnalysis
       } = req.body;
 
+      if (isMemoryDBMode()) {
+        // Use memory database for production
+        const newItem: ClothingItem = {
+          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId,
+          name,
+          category: category as any,
+          type: type as any,
+          imageUrl,
+          thumbnailUrl,
+          colors: colors || [],
+          primaryColor: primaryColor as any,
+          style: style as any,
+          season: season || [],
+          tags: tags || [],
+          brand,
+          sourceUrl,
+          dateAdded: new Date(),
+          wearCount: 0,
+          isFavorite: isFavorite || false,
+          aiAnalysis
+        };
+        
+        await memoryDatabase.createClothingItem(userId, newItem);
+        
+        return res.status(201).json({
+          success: true,
+          data: newItem
+        });
+      }
+
+      // Use Prisma for local development
       const newItem = await prisma.clothingItem.create({
         data: {
           userId,
@@ -131,7 +173,41 @@ export default async function handler(
 
 async function handleSeedWardrobe(req: NextApiRequest, res: NextApiResponse, userId: string) {
   try {
-    // Check if user already has items
+    if (isMemoryDBMode()) {
+      // Use memory database for production
+      const existingItems = await memoryDatabase.getClothingItems(userId);
+      if (existingItems.length > 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'User already has wardrobe items',
+          data: []
+        });
+      }
+
+      // Ensure user exists in memory DB
+      let user = await memoryDatabase.getUserById(userId);
+      if (!user) {
+        user = await memoryDatabase.createUser({
+          id: userId,
+          name: 'Demo User',
+          email: `${userId}@demo.styledandstudied.com`
+        });
+      }
+
+      // Create seed items in memory
+      const seedItems = createSeedItems(userId);
+      for (const item of seedItems) {
+        await memoryDatabase.createClothingItem(userId, item);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Added ${seedItems.length} sample items`,
+        data: seedItems
+      });
+    }
+
+    // Use Prisma for local development
     const existingItems = await prisma.clothingItem.findMany({
       where: { userId },
       take: 1
@@ -201,7 +277,34 @@ async function handleSeedWardrobe(req: NextApiRequest, res: NextApiResponse, use
 
 async function handleResetWardrobe(req: NextApiRequest, res: NextApiResponse, userId: string) {
   try {
-    // Delete existing items
+    if (isMemoryDBMode()) {
+      // Use memory database for production
+      await memoryDatabase.deleteClothingItems(userId);
+      
+      // Ensure user exists in memory DB
+      let user = await memoryDatabase.getUserById(userId);
+      if (!user) {
+        user = await memoryDatabase.createUser({
+          id: userId,
+          name: 'Demo User',
+          email: `${userId}@demo.styledandstudied.com`
+        });
+      }
+
+      // Create new seed items in memory
+      const seedItems = createSeedItems(userId);
+      for (const item of seedItems) {
+        await memoryDatabase.createClothingItem(userId, item);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Reset wardrobe with ${seedItems.length} items`,
+        data: seedItems
+      });
+    }
+
+    // Use Prisma for local development
     const deletedItems = await prisma.clothingItem.deleteMany({
       where: { userId }
     });

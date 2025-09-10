@@ -4,6 +4,7 @@
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/src/lib/prisma';
+import { memoryDatabase, isMemoryDBMode } from '@/src/lib/memory-db';
 import { ApiResponse } from '@/src/types';
 
 interface UserProfile {
@@ -33,6 +34,19 @@ export default async function handler(
 
   if (req.method === 'GET') {
     try {
+      if (isMemoryDBMode()) {
+        // Use memory database for production
+        let user = await memoryDatabase.getUserById(userId);
+        if (!user) {
+          user = await memoryDatabase.createUser({ id: userId });
+        }
+        return res.status(200).json({
+          success: true,
+          data: user
+        });
+      }
+
+      // Use Prisma for local development
       const user = await prisma.user.findUnique({
         where: {
           id: userId
@@ -93,6 +107,20 @@ export default async function handler(
     try {
       const { photos, styleProfile } = req.body;
       
+      if (isMemoryDBMode()) {
+        // Use memory database for production
+        const user = await memoryDatabase.updateUser(userId, {
+          photos,
+          styleProfile
+        });
+        
+        return res.status(200).json({
+          success: true,
+          data: user
+        });
+      }
+
+      // Use Prisma for local development
       const updateData: any = {};
       if (photos) {
         updateData.photos = JSON.stringify(photos);
