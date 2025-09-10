@@ -81,5 +81,9 @@ export const memoryDatabase = {
 };
 
 export const isMemoryDBMode = () => {
-  return process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL?.startsWith('postgresql');
+  // Use memory database in production (Vercel) environment
+  // or when DATABASE_URL points to a SQLite file that won't exist in serverless
+  return process.env.NODE_ENV === 'production' || 
+         process.env.VERCEL === '1' || 
+         (process.env.DATABASE_URL?.includes('file:') && process.env.NODE_ENV !== 'development');
 };

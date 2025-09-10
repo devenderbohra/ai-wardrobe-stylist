@@ -20,6 +20,9 @@ export default async function handler(
 
   try {
     if (req.method === 'GET') {
+      console.log('Clothing GET - Environment:', process.env.NODE_ENV, 'Vercel:', process.env.VERCEL, 'DATABASE_URL:', process.env.DATABASE_URL?.substring(0, 20));
+      console.log('Using memory database mode:', isMemoryDBMode());
+      
       if (isMemoryDBMode()) {
         // Use memory database for production
         const items = await memoryDatabase.getClothingItems(userId);
