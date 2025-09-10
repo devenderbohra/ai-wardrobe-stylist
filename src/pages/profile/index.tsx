@@ -196,6 +196,7 @@ const ProfilePage: React.FC = () => {
             const result = await response.json();
             
             // Update profile with the permanent URL (base64 data URL)
+            console.log('Photo upload successful, URL type:', result.url.startsWith('data:') ? 'base64' : 'other');
             setProfile(prev => ({
               ...prev,
               photos: {
@@ -227,6 +228,15 @@ const ProfilePage: React.FC = () => {
     setIsLoading(true);
     try {
       console.log('Saving profile for user:', session.user.id);
+      
+      // Validate photos are not blob URLs
+      const photos = profile.photos;
+      if (photos.headshot?.startsWith('blob:') || photos.fullBody?.startsWith('blob:')) {
+        toast.error('Please wait for photo uploads to complete before saving.');
+        setIsLoading(false);
+        return;
+      }
+      
       // Save profile data to database
       const response = await apiRequest('/api/user/profile', {
         method: 'PUT',

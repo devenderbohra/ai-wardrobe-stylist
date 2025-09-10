@@ -161,7 +161,7 @@ export default async function handler(
         console.log('ERROR: Blob URL detected for user photo, cannot process server-side');
         return res.status(400).json({
           success: false,
-          error: 'User photo needs to be uploaded as a permanent file. Please re-upload your photo.'
+          error: 'User photo is still processing. Please wait for photo upload to complete and try again, or re-upload your photo in the Profile section.'
         });
       } else {
         // Convert URL to base64
