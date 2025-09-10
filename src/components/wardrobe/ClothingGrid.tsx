@@ -7,7 +7,8 @@ import Image from 'next/image';
 import { Heart, Edit2, Trash2, ExternalLink } from 'lucide-react';
 import { ClothingItem, ClothingCategory } from '@/src/types';
 import { cn } from '@/src/utils';
-import { Card, Button } from '../ui';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 
 export interface ClothingGridProps {
   items: ClothingItem[];
@@ -91,7 +92,6 @@ const ClothingGrid: React.FC<ClothingGridProps> = ({
       {(items || []).map((item) => (
         <Card
           key={item.id}
-          hover={!!onItemClick}
           padding="sm"
           className={cn(
             'relative group overflow-hidden',

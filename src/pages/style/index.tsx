@@ -14,8 +14,8 @@ import { generateOutfitImage } from '@/src/lib/gemini';
 import toast from 'react-hot-toast';
 import OccasionSelector from '@/src/components/ui/OccasionSelector';
 import ClothingGrid from '@/src/components/wardrobe/ClothingGrid';
-import { Button } from '@/src/components/ui';
-import { Card } from '@/src/components/ui';
+import Button from '@/src/components/ui/Button';
+import Card from '@/src/components/ui/Card';
 import { cn } from '@/src/utils';
 
 // TODO: Load actual user wardrobe items from API

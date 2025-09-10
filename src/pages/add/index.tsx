@@ -10,7 +10,8 @@ import { useDemoSession as useSession } from '@/src/lib/demo-session';
 import { ClothingItem, UploadProgress } from '@/src/types';
 import { clothingAPI } from '@/src/lib/api';
 import ImageUpload from '@/src/components/ui/ImageUpload';
-import { Button, Card } from '@/src/components/ui';
+import Button from '@/src/components/ui/Button';
+import Card from '@/src/components/ui/Card';
 import { cn, generateId } from '@/src/utils';
 import toast from 'react-hot-toast';
 

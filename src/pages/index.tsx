@@ -6,8 +6,8 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Sparkles, Shirt, Camera, Zap, ArrowRight } from 'lucide-react';
 import { useDemoSession as useSession } from '@/src/lib/demo-session';
-import { Button } from '@/src/components/ui';
-import { Card } from '@/src/components/ui';
+import Button from '@/src/components/ui/Button';
+import Card from '@/src/components/ui/Card';
 
 const HomePage: React.FC = () => {
   const { data: session } = useSession();
@@ -142,7 +142,7 @@ const HomePage: React.FC = () => {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} hover className="text-center">
+              <Card key={index} className="text-center">
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <Icon className="w-6 h-6 text-purple-600" />
                 </div>
