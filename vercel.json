@@ -5,18 +5,5 @@
   "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
   "env": {
     "SKIP_ENV_VALIDATION": "1"
-  },
-  "redirects": [
-    {
-      "source": "/((?!api).*)",
-      "destination": "https://www.styledandstudied.com/$1",
-      "permanent": false,
-      "has": [
-        {
-          "type": "host",
-          "value": "styledandstudied.com"
-        }
-      ]
-    }
-  ]
+  }
 }

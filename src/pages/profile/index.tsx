@@ -12,6 +12,7 @@ import ImageUpload from '@/src/components/ui/ImageUpload';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { cn } from '@/src/utils';
+import { apiRequest, getApiUrl } from '@/src/utils/api';
 import toast from 'react-hot-toast';
 
 interface ProfileData {
@@ -87,7 +88,7 @@ const ProfilePage: React.FC = () => {
       try {
         setIsLoading(true);
         console.log('Loading profile for user:', session.user.id);
-        const response = await fetch(`/api/user/profile?userId=${session.user.id}`);
+        const response = await fetch(getApiUrl(`/api/user/profile?userId=${session.user.id}`));
         
         console.log('Profile API response status:', response.status);
         if (!response.ok) {
@@ -183,11 +184,8 @@ const ProfilePage: React.FC = () => {
           const base64Data = e.target?.result as string;
           
           // Upload to the API
-          const response = await fetch('/api/upload/image', {
+          const response = await apiRequest('/api/upload/image', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
               imageData: base64Data,
               fileName: file.name
@@ -230,11 +228,8 @@ const ProfilePage: React.FC = () => {
     try {
       console.log('Saving profile for user:', session.user.id);
       // Save profile data to database
-      const response = await fetch('/api/user/profile', {
+      const response = await apiRequest('/api/user/profile', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           userId: session.user.id,
           photos: profile.photos,

@@ -13,6 +13,7 @@ import ImageUpload from '@/src/components/ui/ImageUpload';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { cn, generateId } from '@/src/utils';
+import { apiRequest } from '@/src/utils/api';
 import toast from 'react-hot-toast';
 
 type AddMethod = 'upload' | 'url';
@@ -87,9 +88,8 @@ const AddItemsPage: React.FC = () => {
         });
 
         // Upload image
-        const uploadResponse = await fetch('/api/upload/image', {
+        const uploadResponse = await apiRequest('/api/upload/image', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             imageData: base64Image,
             fileName: progressItem.file.name

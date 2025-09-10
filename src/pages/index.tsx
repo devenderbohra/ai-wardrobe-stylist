@@ -6,6 +6,7 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Sparkles, Shirt, Camera, Zap, ArrowRight } from 'lucide-react';
 import { useDemoSession as useSession } from '@/src/lib/demo-session';
+import { apiRequest } from '@/src/utils/api';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 
@@ -22,11 +23,8 @@ const HomePage: React.FC = () => {
       if (localStorage.getItem(seededKey)) return;
 
       try {
-        const response = await fetch('/api/clothing/seed', {
+        const response = await apiRequest('/api/clothing/seed', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify({ userId: session.user.id }),
         });
 

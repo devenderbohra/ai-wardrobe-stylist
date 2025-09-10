@@ -17,6 +17,7 @@ import ClothingGrid from '@/src/components/wardrobe/ClothingGrid';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { cn } from '@/src/utils';
+import { apiRequest } from '@/src/utils/api';
 
 // TODO: Load actual user wardrobe items from API
 const MOCK_WARDROBE_ITEMS: ClothingItem[] = [];
@@ -152,11 +153,8 @@ const StylePage: React.FC = () => {
     setCurrentStep('generate');
     
     try {
-      const response = await fetch('/api/ai/generate-outfit', {
+      const response = await apiRequest('/api/ai/generate-outfit', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           clothingItemIds: selectedItems,
           occasion: 'casual', // Default occasion since we removed the selection

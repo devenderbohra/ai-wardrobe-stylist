@@ -14,6 +14,7 @@ import EditItemModal from '@/src/components/wardrobe/EditItemModal';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { cn } from '@/src/utils';
+import { apiRequest } from '@/src/utils/api';
 import toast from 'react-hot-toast';
 
 // Mock data for demonstration
@@ -56,11 +57,8 @@ const WardrobePage: React.FC = () => {
           // If user has no items, seed with sample data
           if (response.data!.length === 0) {
             try {
-              const seedResponse = await fetch('/api/clothing/seed', {
+              const seedResponse = await apiRequest('/api/clothing/seed', {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({ userId: session.user.id }),
               });
               
